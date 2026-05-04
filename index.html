@@ -23,22 +23,76 @@
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--mono);overflow:hidden}
-.app{display:flex;flex-direction:column;height:100dvh;height:100vh}
+.app{display:flex;flex-direction:column;height:100dvh;height:100vh;position:relative}
 
-.topbar{background:rgba(17,17,17,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:0.5px solid var(--g1);padding:0 20px 12px;padding-top:calc(12px + var(--safe-t));display:flex;align-items:center;flex-shrink:0}
+.topbar{background:rgba(16,16,16,0.94);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-bottom:0.5px solid var(--g1);padding:0 16px 12px 14px;padding-top:calc(10px + var(--safe-t));display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:relative;z-index:200}
 .topbar-logo{font-family:var(--disp);font-size:20px;letter-spacing:0.12em}
 .topbar-spacer{flex:1}
 .sync-dot{width:6px;height:6px;border-radius:50%;background:var(--g2);display:inline-block;margin-right:8px;transition:all 0.4s}
 .sync-dot.live{background:var(--green);box-shadow:0 0 8px var(--green)}
 .topbar-clock{font-size:12px;color:var(--g4);letter-spacing:0.06em}
 
-.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 16px calc(16px + var(--safe-b))}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 16px 110px}
 
-.bottom-nav{background:rgba(17,17,17,0.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:0.5px solid var(--g1);display:flex;flex-shrink:0;padding-bottom:calc(var(--safe-b) + 4px)}
-.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 4px 6px;cursor:pointer;border:none;background:none;color:var(--g3);transition:color 0.2s;gap:4px;min-height:56px}
-.nav-item.active{color:var(--w)}
-.nav-icon{font-size:20px;line-height:1}
-.nav-label{font-size:9px;letter-spacing:0.06em;font-family:var(--mono)}
+/* ── HAMBURGER + DRAWER ── */
+.ham-btn{
+  width:40px;height:40px;border-radius:11px;
+  background:rgba(55,55,55,0.52);
+  backdrop-filter:blur(40px) saturate(200%) brightness(1.2);
+  -webkit-backdrop-filter:blur(40px) saturate(200%) brightness(1.2);
+  border:0.5px solid rgba(255,255,255,0.14);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4.5px;
+  cursor:pointer;flex-shrink:0;
+  box-shadow:0 4px 16px rgba(0,0,0,0.45),inset 0 1px 0 rgba(255,255,255,0.18);
+  -webkit-user-select:none;transition:background 0.2s;
+}
+.ham-btn:active{background:rgba(70,70,70,0.65)}
+.ham-line{
+  width:15px;height:1.5px;background:rgba(220,220,220,0.9);border-radius:2px;
+  transition:all 0.32s cubic-bezier(0.32,0.72,0,1);transform-origin:center;
+}
+.ham-btn.open .ham-line:nth-child(1){transform:translateY(6px) rotate(45deg)}
+.ham-btn.open .ham-line:nth-child(2){opacity:0;transform:scaleX(0)}
+.ham-btn.open .ham-line:nth-child(3){transform:translateY(-6px) rotate(-45deg)}
+
+/* Drawer */
+.drawer{
+  position:fixed;top:0;left:0;bottom:0;width:220px;
+  background:rgba(14,14,14,0.96);
+  backdrop-filter:blur(48px) saturate(220%) brightness(1.05);
+  -webkit-backdrop-filter:blur(48px) saturate(220%) brightness(1.05);
+  border-right:0.5px solid rgba(255,255,255,0.08);
+  padding:calc(var(--safe-t) + 68px) 0 calc(var(--safe-b) + 20px);
+  transform:translateX(-100%);
+  transition:transform 0.32s cubic-bezier(0.32,0.72,0,1);
+  z-index:300;
+  box-shadow:8px 0 48px rgba(0,0,0,0.7);
+}
+.drawer.open{transform:translateX(0)}
+
+.drawer-item{
+  display:flex;align-items:center;gap:13px;
+  padding:14px 22px;cursor:pointer;transition:background 0.15s;
+}
+.drawer-item:active{background:rgba(255,255,255,0.05)}
+.drawer-item.active-page{background:rgba(255,255,255,0.07)}
+.di-icon{
+  width:32px;height:32px;border-radius:9px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;background:rgba(255,255,255,0.06);flex-shrink:0;
+}
+.drawer-item.active-page .di-icon{background:rgba(255,255,255,0.14);box-shadow:inset 0 1px 0 rgba(255,255,255,0.15)}
+.di-text{font-size:14px;color:#bbb;letter-spacing:0.03em;font-family:var(--mono)}
+.drawer-item.active-page .di-text{color:#eee}
+.drawer-divider{height:0.5px;background:rgba(255,255,255,0.06);margin:6px 16px}
+
+/* Dim backdrop */
+.drawer-dim{
+  position:fixed;inset:0;background:rgba(0,0,0,0.55);
+  backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);
+  z-index:299;opacity:0;transition:opacity 0.3s;pointer-events:none;display:block;
+}
+.drawer-dim.show{opacity:1;pointer-events:auto}
 
 .page{display:none}.page.active{display:block}
 
@@ -52,7 +106,7 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--mono
 .emp-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .emp-card{background:var(--s2);border-radius:var(--r);padding:18px 12px;text-align:center;cursor:pointer;transition:all 0.2s;border:1.5px solid transparent}
 .emp-card.selected{border-color:var(--w);background:var(--s3)}
-.avatar{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;margin:0 auto 10px;background:var(--s3);border:1px solid var(--g1)}
+.avatar{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;margin:0 auto 10px;background:var(--s3);border:1px solid var(--g1);overflow:hidden;position:relative}
 .emp-name{font-size:13px;color:var(--w2);margin-bottom:6px}
 .status-row{font-size:11px;color:var(--g4);display:flex;align-items:center;justify-content:center;gap:5px}
 .dot{width:6px;height:6px;border-radius:50%;display:inline-block;flex-shrink:0}
@@ -161,11 +215,32 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--mono
 .add-btn:active{background:var(--g6)}
 
 /* Memo */
-.memo-item{background:var(--s2);border-radius:var(--r);padding:14px 16px;margin-bottom:8px;position:relative}
-.memo-who{font-size:10px;letter-spacing:0.1em;color:var(--g4);text-transform:uppercase;margin-bottom:2px}
-.memo-date{font-size:10px;color:var(--g3)}
-.memo-text{font-size:13px;color:var(--g6);line-height:1.7;margin-top:8px}
-.memo-del{position:absolute;top:12px;right:12px;border:none;background:none;cursor:pointer;color:var(--g3);font-size:18px;padding:4px}
+/* Morandi sticky notes */
+:root{
+  --m1:#C9B8A8;--m2:#B8C4BB;--m3:#C4B5C0;--m4:#B5BEC4;--m5:#C4C0B5;--m6:#BCC4C0;
+  --m1d:#6b5d50;--m2d:#4d6055;--m3d:#5e4d59;--m4d:#4d5a62;--m5d:#5e5a4d;--m6d:#506058;
+}
+.memo-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.memo-item{
+  border-radius:3px 12px 12px 12px;padding:14px 14px 12px;
+  position:relative;min-height:110px;
+  box-shadow:2px 3px 12px rgba(0,0,0,0.35),0 1px 3px rgba(0,0,0,0.2);
+  transform:rotate(0deg);transition:transform 0.2s,box-shadow 0.2s;
+}
+.memo-item:nth-child(6n+1){background:var(--m1);--txt:var(--m1d)}
+.memo-item:nth-child(6n+2){background:var(--m2);--txt:var(--m2d);transform:rotate(-0.8deg)}
+.memo-item:nth-child(6n+3){background:var(--m3);--txt:var(--m3d);transform:rotate(0.5deg)}
+.memo-item:nth-child(6n+4){background:var(--m4);--txt:var(--m4d);transform:rotate(-0.4deg)}
+.memo-item:nth-child(6n+5){background:var(--m5);--txt:var(--m5d);transform:rotate(0.7deg)}
+.memo-item:nth-child(6n+6){background:var(--m6);--txt:var(--m6d);transform:rotate(-0.6deg)}
+.memo-item:active{transform:rotate(0deg) scale(1.02);box-shadow:4px 6px 20px rgba(0,0,0,0.45)}
+/* pin dot */
+.memo-item::before{content:'';position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:10px;height:10px;border-radius:50%;background:rgba(0,0,0,0.18);box-shadow:0 1px 3px rgba(0,0,0,0.3)}
+.memo-who{font-size:9px;letter-spacing:0.12em;color:var(--txt);text-transform:uppercase;margin-bottom:6px;opacity:0.7;font-weight:500}
+.memo-date{font-size:9px;color:var(--txt);opacity:0.5}
+.memo-text{font-size:12px;color:var(--txt);line-height:1.65;margin-top:4px;font-family:var(--mono);word-break:break-word}
+.memo-del{position:absolute;bottom:8px;right:10px;border:none;background:rgba(0,0,0,0.1);cursor:pointer;color:var(--txt);font-size:14px;padding:3px 6px;border-radius:6px;line-height:1;opacity:0.6}
+.memo-del:active{opacity:1;background:rgba(0,0,0,0.2)}
 .memo-textarea{width:100%;padding:12px 14px;border:1px solid var(--g1);border-radius:var(--r-sm);background:var(--s3);color:var(--w);font-size:14px;outline:none;font-family:var(--mono);resize:none;height:100px;line-height:1.7;-webkit-appearance:none}
 .memo-textarea:focus{border-color:var(--g3)}
 
@@ -230,10 +305,18 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--mono
 <body>
 <div class="app">
 <div class="topbar">
-  <div class="topbar-logo">CHECKIN</div>
-  <div class="topbar-spacer"></div>
-  <span class="sync-dot" id="syncDot"></span>
-  <div class="topbar-clock" id="clock">--:--</div>
+  <button class="ham-btn" id="hamBtn" onclick="toggleDrawer()">
+    <div class="ham-line"></div>
+    <div class="ham-line"></div>
+    <div class="ham-line"></div>
+  </button>
+  <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px">
+    <div class="topbar-logo">CHECKIN</div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <span class="sync-dot" id="syncDot"></span>
+      <div class="topbar-clock" id="clock">--:--</div>
+    </div>
+  </div>
 </div>
 
 <div class="scroll" id="mainScroll">
@@ -245,16 +328,16 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--mono
       <button class="install-btn" id="installBtn">安裝</button>
     </div>
     <div class="section">
-      <div class="section-header">員工</div>
+      <div class="section-header">成員</div>
       <div class="emp-grid">
         <div class="emp-card selected" id="emp-card-A" onclick="selectEmp('A')">
-          <div class="avatar">宗彥</div>
-          <div class="emp-name">帥哥宗彥</div>
+          <div class="avatar" id="av-emp-A" style="font-size:30px;background:transparent;border:none">🐸</div>
+          <div class="emp-name">Yen</div>
           <div class="status-row" id="status-a"><span class="dot dot-out"></span>未打卡</div>
         </div>
         <div class="emp-card" id="emp-card-B" onclick="selectEmp('B')">
-          <div class="avatar">誓恩</div>
-          <div class="emp-name">胖胖誓恩</div>
+          <div class="avatar" id="av-emp-B" style="font-size:30px;background:transparent;border:none">🐵</div>
+          <div class="emp-name">4N</div>
           <div class="status-row" id="status-b"><span class="dot dot-out"></span>未打卡</div>
         </div>
       </div>
@@ -263,9 +346,9 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--mono
       <div class="section-header">打卡</div>
       <div style="background:var(--s2);border-radius:var(--r);padding:20px">
         <div class="action-header">
-          <div class="avatar" id="actionAv" style="width:42px;height:42px;font-size:13px;margin:0">宗彥</div>
+          <div class="avatar" id="actionAv" style="width:42px;height:42px;font-size:24px;background:transparent;border:none;margin:0">🐸</div>
           <div>
-            <div class="name" id="actionName">帥哥宗彥</div>
+            <div class="name" id="actionName">Yen</div>
             <div class="sub" id="actionSub">今日未打卡</div>
           </div>
         </div>
@@ -278,17 +361,28 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--mono
           </div>
         </div>
         <div id="secB" style="display:none">
-          <div class="checkin-msg" id="bMsg">上班打卡後，下班時登錄今日跑車金額及里程。</div>
+          <!-- 上班時顯示：起始里程 -->
+          <div id="bCheckInFields">
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">起始里程 km</label>
+              <input class="form-input" type="number" id="kmStart" placeholder="0" inputmode="numeric">
+            </div>
+          </div>
+          <!-- 下班時顯示：收入 + 趟數 -->
           <div id="bAmtSec" style="display:none">
-            <div class="amount-lbl">今日跑車結算</div>
+            <div class="amount-lbl">今日結算</div>
             <div class="amount-wrap"><span class="amount-prefix">$</span><input type="number" class="amount-input" id="carAmount" placeholder="0" min="0" inputmode="numeric" oninput="updateAmtPreview()"></div>
-            <div class="form-row" style="gap:8px;margin-bottom:10px">
-              <div class="form-group" style="margin:0"><label class="form-label">起始里程 km</label><input class="form-input" type="number" id="kmStart" placeholder="0" inputmode="numeric" oninput="updateAmtPreview()"></div>
-              <div class="form-group" style="margin:0"><label class="form-label">結束里程 km</label><input class="form-input" type="number" id="kmEnd" placeholder="0" inputmode="numeric" oninput="updateAmtPreview()"></div>
+            <div class="form-group" style="margin-bottom:10px">
+              <label class="form-label">今日趟數</label>
+              <input class="form-input" type="number" id="tripCount" placeholder="0" inputmode="numeric" oninput="updateAmtPreview()">
+            </div>
+            <div class="form-group" style="margin-bottom:10px">
+              <label class="form-label">結束里程 km</label>
+              <input class="form-input" type="number" id="kmEnd" placeholder="0" inputmode="numeric" oninput="updateAmtPreview()">
             </div>
             <div class="amt-preview" id="amtPreview">
               <div><div style="font-size:9px;color:var(--yellow);letter-spacing:0.1em;text-transform:uppercase">金額</div><div style="font-family:var(--disp);font-size:22px;color:var(--yellow)" id="amtVal">$0</div></div>
-              <div style="text-align:right"><div style="font-size:9px;color:var(--g4);letter-spacing:0.1em;text-transform:uppercase">里程</div><div style="font-family:var(--disp);font-size:22px;color:var(--g5)" id="kmVal">0 KM</div></div>
+              <div style="text-align:right"><div style="font-size:9px;color:var(--g4);letter-spacing:0.1em;text-transform:uppercase">趟數</div><div style="font-family:var(--disp);font-size:22px;color:var(--g5)" id="tripVal">0</div></div>
             </div>
           </div>
         </div>
@@ -314,16 +408,16 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--mono
     <div class="section"><div class="group">
       <div style="padding:24px;text-align:center">
         <div class="avatar" style="margin:0 auto 12px;width:52px;height:52px">宗彥</div>
-        <div style="font-size:15px;margin-bottom:2px">帥哥宗彥</div>
-        <div style="font-size:10px;color:var(--g4);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.1em">員工 A</div>
+        <div style="font-size:15px;margin-bottom:2px">Yen</div>
+        <div style="font-size:10px;color:var(--g4);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.1em">Yen</div>
         <canvas id="qrA" width="180" height="180" class="qr-canvas"></canvas>
         <div class="qr-hint">掃描此 QR Code 打卡</div>
       </div>
       <div class="divider"></div>
       <div style="padding:24px;text-align:center">
         <div class="avatar" style="margin:0 auto 12px;width:52px;height:52px">誓恩</div>
-        <div style="font-size:15px;margin-bottom:2px">胖胖誓恩</div>
-        <div style="font-size:10px;color:var(--g4);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.1em">員工 B</div>
+        <div style="font-size:15px;margin-bottom:2px">4N</div>
+        <div style="font-size:10px;color:var(--g4);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.1em">4N</div>
         <canvas id="qrB" width="180" height="180" class="qr-canvas"></canvas>
         <div class="qr-hint">掃描此 QR Code 打卡</div>
       </div>
@@ -335,8 +429,8 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--mono
     <div class="sec-h">打卡紀錄</div>
     <div class="filter-row">
       <button class="filter-btn active" onclick="filterLog('all',this)">全部</button>
-      <button class="filter-btn" onclick="filterLog('A',this)">帥哥宗彥</button>
-      <button class="filter-btn" onclick="filterLog('B',this)">胖胖誓恩</button>
+      <button class="filter-btn" onclick="filterLog('A',this)">Yen</button>
+      <button class="filter-btn" onclick="filterLog('B',this)">4N</button>
     </div>
     <div style="font-size:11px;color:var(--g3);margin-bottom:10px;text-align:center;letter-spacing:0.04em">← 左滑可編輯或刪除</div>
     <div class="group" id="logList"><div class="empty">尚無打卡紀錄</div></div>
@@ -368,7 +462,7 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--mono
           <div class="form-group"><label class="form-label">時間</label><input class="form-input" type="time" id="evTime"></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label class="form-label">對象</label><select class="form-input" id="evWho"><option value="A">帥哥宗彥</option><option value="B">胖胖誓恩</option><option value="both">兩人</option></select></div>
+          <div class="form-group"><label class="form-label">對象</label><select class="form-input" id="evWho"><option value="A">Yen</option><option value="B">4N</option><option value="both">兩人</option></select></div>
           <div class="form-group"><label class="form-label">提醒</label><select class="form-input" id="evRemind"><option value="0">不提醒</option><option value="10">10 分前</option><option value="30" selected>30 分前</option><option value="60">1 小時前</option><option value="1440">1 天前</option></select></div>
         </div>
         <div class="form-group"><label class="form-label">備註</label><input class="form-input" type="text" id="evNote" placeholder="選填"></div>
@@ -381,12 +475,12 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--mono
   <div class="page" id="page-memo">
     <div class="sec-h">備忘錄</div>
     <div class="section"><div class="section-header">新增備忘</div><div class="group"><div style="padding:16px">
-      <div class="form-group"><label class="form-label">作者</label><select class="form-input" id="memoWho"><option value="A">帥哥宗彥</option><option value="B">胖胖誓恩</option></select></div>
+      <div class="form-group"><label class="form-label">作者</label><select class="form-input" id="memoWho"><option value="A">Yen</option><option value="B">4N</option></select></div>
       <div class="form-group"><textarea class="memo-textarea" id="memoText" placeholder="輸入備忘內容..."></textarea></div>
       <button class="add-btn" onclick="addMemo()">儲存備忘</button>
     </div></div></div>
     <div class="section"><div class="section-header">所有備忘</div>
-      <div class="filter-row"><button class="filter-btn active" onclick="filterMemo('all',this)">全部</button><button class="filter-btn" onclick="filterMemo('A',this)">帥哥宗彥</button><button class="filter-btn" onclick="filterMemo('B',this)">胖胖誓恩</button></div>
+      <div class="filter-row"><button class="filter-btn active" onclick="filterMemo('all',this)">全部</button><button class="filter-btn" onclick="filterMemo('A',this)">Yen</button><button class="filter-btn" onclick="filterMemo('B',this)">4N</button></div>
       <div id="memoList"><div class="empty">尚無備忘</div></div>
     </div>
   </div>
@@ -402,21 +496,21 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--mono
     </div>
     <div class="section"><div class="section-header">工時統計</div><div class="group"><div style="padding:16px">
       <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px">
-        <div><div style="font-size:10px;color:var(--g4);text-transform:uppercase;letter-spacing:0.08em">帥哥宗彥</div><div class="stat-num" id="hoursA" style="font-size:24px">0h</div></div>
-        <div style="text-align:right"><div style="font-size:10px;color:var(--g4);text-transform:uppercase;letter-spacing:0.08em">胖胖誓恩</div><div class="stat-num" id="hoursB" style="font-size:24px">0h</div></div>
+        <div><div style="font-size:10px;color:var(--g4);text-transform:uppercase;letter-spacing:0.08em">Yen</div><div class="stat-num" id="hoursA" style="font-size:24px">0h</div></div>
+        <div style="text-align:right"><div style="font-size:10px;color:var(--g4);text-transform:uppercase;letter-spacing:0.08em">4N</div><div class="stat-num" id="hoursB" style="font-size:24px">0h</div></div>
       </div>
       <div class="hours-bar"><div class="hours-fill" id="hoursBarA" style="width:0%"></div></div>
       <div style="margin-top:4px"><div class="hours-bar"><div class="hours-fill" id="hoursBarB" style="width:0%;background:var(--g3)"></div></div></div>
       <div id="avgHours" style="font-size:11px;color:var(--g4);margin-top:12px;line-height:2"></div>
     </div></div></div>
-    <div class="section"><div class="section-header">工作項目 — 帥哥宗彥</div><div class="group"><div style="padding:16px">
+    <div class="section"><div class="section-header">工作項目 — Yen</div><div class="group"><div style="padding:16px">
       <div class="bar-chart">
         <div class="bar-col"><div class="bar-fill" id="bShoot"></div><div class="bar-lbl">拍攝 <span id="cShoot">0</span></div></div>
         <div class="bar-col"><div class="bar-fill" id="bEdit"></div><div class="bar-lbl">剪輯 <span id="cEdit">0</span></div></div>
         <div class="bar-col"><div class="bar-fill" id="bOther"></div><div class="bar-lbl">其他 <span id="cOther">0</span></div></div>
       </div>
     </div></div></div>
-    <div class="section"><div class="section-header">跑車統計 — 胖胖誓恩</div>
+    <div class="section"><div class="section-header">跑車統計 — 4N</div>
       <div class="stat-grid"><div class="stat-card"><div class="stat-num" id="avgEarn">$0</div><div class="stat-lbl">平均每趟收入</div></div><div class="stat-card"><div class="stat-num" id="avgKm">0</div><div class="stat-lbl">平均每趟里程</div></div></div>
     </div>
     <div class="section"><div class="section-header">打卡明細</div><div class="group" style="overflow-x:auto">
@@ -430,13 +524,32 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--mono
 
 </div><!-- scroll end -->
 
-<nav class="bottom-nav">
-  <button class="nav-item active" onclick="showPage('checkin',this)"><span class="nav-icon">⏱</span><span class="nav-label">打卡</span></button>
-  <button class="nav-item" onclick="showPage('records',this)"><span class="nav-icon">≡</span><span class="nav-label">紀錄</span></button>
-  <button class="nav-item" onclick="showPage('calendar',this)"><span class="nav-icon">◫</span><span class="nav-label">行事曆</span></button>
-  <button class="nav-item" onclick="showPage('memo',this)"><span class="nav-icon">✎</span><span class="nav-label">備忘錄</span></button>
-  <button class="nav-item" onclick="showPage('report',this)"><span class="nav-icon">↗</span><span class="nav-label">報表</span></button>
-</nav>
+<!-- Drawer dim -->
+<div class="drawer-dim" id="drawerDim" onclick="closeDrawer()"></div>
+
+<!-- Drawer -->
+<div class="drawer" id="drawer">
+  <div class="drawer-item active-page" id="di-checkin" onclick="drawerNav('checkin')">
+    <div class="di-icon">⏱</div><div class="di-text">打卡</div>
+  </div>
+  <div class="drawer-item" id="di-records" onclick="drawerNav('records')">
+    <div class="di-icon">≡</div><div class="di-text">打卡紀錄</div>
+  </div>
+  <div class="drawer-divider"></div>
+  <div class="drawer-item" id="di-calendar" onclick="drawerNav('calendar')">
+    <div class="di-icon">◫</div><div class="di-text">行事曆</div>
+  </div>
+  <div class="drawer-item" id="di-memo" onclick="drawerNav('memo')">
+    <div class="di-icon">✎</div><div class="di-text">備忘錄</div>
+  </div>
+  <div class="drawer-divider"></div>
+  <div class="drawer-item" id="di-report" onclick="drawerNav('report')">
+    <div class="di-icon">↗</div><div class="di-text">報表</div>
+  </div>
+  <div class="drawer-item" id="di-qr" onclick="drawerNav('qr')">
+    <div class="di-icon">⬛</div><div class="di-text">QR Code</div>
+  </div>
+</div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -509,19 +622,43 @@ function checkNotifPermission(){if('Notification'in window&&Notification.permiss
 async function requestNotif(){if(!('Notification'in window)){showToast('不支援通知');return;}const r=await Notification.requestPermission();notifGranted=r==='granted';document.getElementById('notifReq').style.display='none';showToast(r==='granted'?'通知已開啟！':'通知未允許');if(notifGranted)events.forEach(scheduleEventNotif);}
 function scheduleEventNotif(ev){if(!notifGranted||!ev.remind||ev.remind==='0'||!ev.time)return;const[y,m,d]=ev.date.split('-').map(Number);const[hh,mm]=ev.time.split(':').map(Number);const delay=new Date(y,m-1,d,hh,mm).getTime()-parseInt(ev.remind)*60000-Date.now();if(delay<=0)return;if(window._swReg?.active)window._swReg.active.postMessage({type:'SCHEDULE_NOTIF',delay,title:`📅 ${ev.title}`,body:`${ev.time} 排程即將開始`});else setTimeout(()=>new Notification(`📅 ${ev.title}`,{body:`${ev.time} 排程即將開始`,icon:'/icons/icon-192.png'}),delay);}
 
-function showPage(name,btn){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));document.getElementById('page-'+name).classList.add('active');btn.classList.add('active');document.getElementById('mainScroll').scrollTop=0;curPage=name;if(name==='qr')generateQRCodes();if(name==='report')updateReport();if(name==='calendar'){checkNotifPermission();renderCalendar();}if(name==='memo')renderMemos(curMemoFilter);if(name==='records')updateLogList(curFilter);}
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.drawer-item').forEach(b=>b.classList.remove('active-page'));
+  document.getElementById('page-'+name).classList.add('active');
+  const di=document.getElementById('di-'+name);if(di)di.classList.add('active-page');
+  document.getElementById('mainScroll').scrollTop=0;
+  curPage=name;
+  if(name==='qr')generateQRCodes();if(name==='report')updateReport();
+  if(name==='calendar'){checkNotifPermission();renderCalendar();}
+  if(name==='memo')renderMemos(curMemoFilter);if(name==='records')updateLogList(curFilter);
+}
+function drawerNav(name){showPage(name);closeDrawer();}
+function toggleDrawer(){
+  const d=document.getElementById('drawer');
+  const b=document.getElementById('hamBtn');
+  const dim=document.getElementById('drawerDim');
+  const open=d.classList.toggle('open');
+  b.classList.toggle('open',open);
+  dim.classList.toggle('show',open);
+}
+function closeDrawer(){
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('hamBtn').classList.remove('open');
+  document.getElementById('drawerDim').classList.remove('show');
+}
 
-function selectEmp(emp){currentEmp=emp;document.querySelectorAll('.emp-card').forEach(c=>c.classList.remove('selected'));document.getElementById('emp-card-'+emp).classList.add('selected');selectedTask='';document.querySelectorAll('.task-pill').forEach(b=>b.classList.remove('active'));const av=document.getElementById('actionAv');av.textContent=emp==='A'?'宗彥':'誓恩';document.getElementById('actionName').textContent=emp==='A'?'帥哥宗彥':'胖胖誓恩';document.getElementById('secA').style.display=emp==='A'?'block':'none';document.getElementById('secB').style.display=emp==='A'?'none':'block';updateCheckinBtn();}
+function selectEmp(emp){currentEmp=emp;document.querySelectorAll('.emp-card').forEach(c=>c.classList.remove('selected'));document.getElementById('emp-card-'+emp).classList.add('selected');selectedTask='';document.querySelectorAll('.task-pill').forEach(b=>b.classList.remove('active'));const av=document.getElementById('actionAv');av.textContent=emp==='A'?'🐸':'🐵';document.getElementById('actionName').textContent=emp==='A'?'Yen':'4N';document.getElementById('secA').style.display=emp==='A'?'block':'none';document.getElementById('secB').style.display=emp==='A'?'none':'block';updateCheckinBtn();}
 
-function updateCheckinBtn(){const btn=document.getElementById('checkinBtn');const sub=document.getElementById('actionSub');const isOut=empStatus[currentEmp]==='out';btn.textContent=isOut?'上班打卡':'下班打卡';btn.className='checkin-btn '+(isOut?'btn-in':'btn-out');if(currentEmp==='B'){const ci=empStatus['B']==='in';document.getElementById('bAmtSec').style.display=ci?'block':'none';document.getElementById('bMsg').style.display=ci?'none':'block';if(!ci){['carAmount','kmStart','kmEnd'].forEach(id=>document.getElementById(id).value='');document.getElementById('amtPreview').classList.remove('show');}}if(isOut){sub.textContent='今日未打卡';return;}const last=[...logs].reverse().find(l=>l.emp===currentEmp&&l.type==='in');sub.textContent=last?'上班 '+last.time:'';}
+function updateCheckinBtn(){const btn=document.getElementById('checkinBtn');const sub=document.getElementById('actionSub');const isOut=empStatus[currentEmp]==='out';btn.textContent=isOut?'上班打卡':'下班打卡';btn.className='checkin-btn '+(isOut?'btn-in':'btn-out');if(currentEmp==='B'){const ci=empStatus['B']==='in';document.getElementById('bAmtSec').style.display=ci?'block':'none';document.getElementById('bCheckInFields').style.display=ci?'none':'block';if(!ci){['carAmount','kmEnd','tripCount'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});document.getElementById('amtPreview').classList.remove('show');}}if(isOut){sub.textContent='今日未打卡';return;}const last=[...logs].reverse().find(l=>l.emp===currentEmp&&l.type==='in');sub.textContent=last?'上班 '+last.time:'';}
 
 function selectTask(task){selectedTask=selectedTask===task?'':task;document.querySelectorAll('.task-pill').forEach(b=>b.classList.remove('active'));if(selectedTask)document.getElementById('task-'+task).classList.add('active');}
 
-function updateAmtPreview(){const amt=parseInt(document.getElementById('carAmount').value)||0;const s=parseInt(document.getElementById('kmStart').value)||0;const e=parseInt(document.getElementById('kmEnd').value)||0;const km=e>s?e-s:0;document.getElementById('amtVal').textContent='$'+amt.toLocaleString();document.getElementById('kmVal').textContent=km+' KM';const p=document.getElementById('amtPreview');if(amt>0||km>0)p.classList.add('show');else p.classList.remove('show');}
+function updateAmtPreview(){const amt=parseInt(document.getElementById('carAmount').value)||0;const trips=parseInt(document.getElementById('tripCount').value)||0;document.getElementById('amtVal').textContent='$'+amt.toLocaleString();document.getElementById('tripVal').textContent=trips;const p=document.getElementById('amtPreview');if(amt>0||trips>0)p.classList.add('show');else p.classList.remove('show');}
 
 function openCamera(){document.getElementById('cameraInput').click();}
 function handleQRFile(input){if(!input.files||!input.files[0])return;const reader=new FileReader();reader.onload=e=>{const img=new Image();img.onload=()=>{const c=document.createElement('canvas');c.width=img.width;c.height=img.height;const ctx=c.getContext('2d');ctx.drawImage(img,0,0);const d=ctx.getImageData(0,0,img.width,img.height);const code=jsQR(d.data,d.width,d.height);if(code)handleQRResult(code.data);else{showToast('無法辨識 QR Code');showScanOk('無法辨識，請手動打卡');}};img.src=e.target.result;};reader.readAsDataURL(input.files[0]);input.value='';}
-function handleQRResult(data){if(data.startsWith('EMP_A')){selectEmp('A');showScanOk('✓ 識別：帥哥宗彥');}else if(data.startsWith('EMP_B')){selectEmp('B');showScanOk('✓ 識別：胖胖誓恩');}else showScanOk('✓ 掃描成功');showToast('QR Code 掃描成功！');}
+function handleQRResult(data){if(data.startsWith('EMP_A')){selectEmp('A');showScanOk('✓ 識別：Yen');}else if(data.startsWith('EMP_B')){selectEmp('B');showScanOk('✓ 識別：4N');}else showScanOk('✓ 掃描成功');showToast('QR Code 掃描成功！');}
 function showScanOk(msg){const el=document.getElementById('scanOk');el.textContent=msg+'　'+new Date().toLocaleTimeString('zh-TW');el.classList.add('show');setTimeout(()=>el.classList.remove('show'),4000);}
 function manualCheckin(){showScanOk('✓ 手動打卡模式');showToast('請確認員工後按打卡鍵');}
 
@@ -530,10 +667,24 @@ function doCheckin(){
   const time=now.toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
   const date=now.toLocaleDateString('zh-TW');
   const type=empStatus[currentEmp]==='out'?'in':'out';
-  const name=currentEmp==='A'?'帥哥宗彥':'胖胖誓恩';
+  const name=currentEmp==='A'?'Yen':'4N';
   let detail='',amount=0,km=0;
   if(currentEmp==='A'&&selectedTask)detail=selectedTask;
-  if(currentEmp==='B'&&type==='out'){amount=parseInt(document.getElementById('carAmount').value)||0;const s=parseInt(document.getElementById('kmStart').value)||0;const e=parseInt(document.getElementById('kmEnd').value)||0;km=e>s?e-s:0;const pts=[];if(amount>0)pts.push('$'+amount.toLocaleString());if(km>0)pts.push(km+' km');detail=pts.join(' · ');}
+  if(currentEmp==='B'){
+    if(type==='in'){
+      // Store kmStart in session
+      window._kmStart=parseInt(document.getElementById('kmStart').value)||0;
+    }
+    if(type==='out'){
+      amount=parseInt(document.getElementById('carAmount').value)||0;
+      const trips=parseInt(document.getElementById('tripCount').value)||0;
+      const e=parseInt(document.getElementById('kmEnd').value)||0;
+      const s=window._kmStart||0;
+      km=e>s?e-s:0;
+      const pts=[];if(amount>0)pts.push('$'+amount.toLocaleString());if(trips>0)pts.push(trips+'趟');if(km>0)pts.push(km+'km');detail=pts.join(' · ');
+      window._kmStart=0;
+    }
+  }
   let workMins=0;
   if(type==='out'){const li=[...logs].reverse().find(l=>l.emp===currentEmp&&l.type==='in'&&l.date===date);if(li){const[ih,im]=li.time.split(':').map(Number);const[oh,om]=time.split(':').map(Number);workMins=Math.max(0,(oh*60+om)-(ih*60+im));}}
   logs.push({emp:currentEmp,name,type,time,date,detail,amount,km,workMins,ts:now.getTime()});
@@ -613,7 +764,7 @@ function saveEditLog(){
 }
 function deleteLog(ts){logs=logs.filter(l=>l.ts!==ts);save('logs',logs);updateLogList(curFilter);showToast('紀錄已刪除');swipedItem=null;}
 
-function generateQRCodes(){[['A'],['B']].forEach(([emp])=>{const canvas=document.getElementById('qr'+emp);const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,180,180);drawQR(ctx,`EMP_${emp}_${emp==='A'?'帥哥宗彥':'胖胖誓恩'}`,180,'#111111');});}
+function generateQRCodes(){[['A'],['B']].forEach(([emp])=>{const canvas=document.getElementById('qr'+emp);const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,180,180);drawQR(ctx,`EMP_${emp}_${emp==='A'?'Yen':'4N'}`,180,'#111111');});}
 function drawQR(ctx,data,size,color){const m=21,cell=Math.floor(size/m),pat=genPat(data);ctx.fillStyle=color;for(let r=0;r<m;r++)for(let c=0;c<m;c++)if(pat[r][c])ctx.fillRect(c*cell,r*cell,cell-1,cell-1);[[0,0],[0,14],[14,0]].forEach(([r,c])=>{ctx.strokeStyle=color;ctx.lineWidth=cell;ctx.strokeRect(c*cell+cell/2,r*cell+cell/2,6*cell,6*cell);ctx.fillStyle=color;ctx.fillRect((c+2)*cell,(r+2)*cell,3*cell,3*cell);});}
 function genPat(seed){let h=0;for(let i=0;i<seed.length;i++)h=(h*31+seed.charCodeAt(i))&0xffff;return Array.from({length:21},()=>Array.from({length:21},()=>{h=(h*1664525+1013904223)&0xffffffff;return(h&1)===1;}));}
 
@@ -629,13 +780,13 @@ function renderCalendar(){
   grid.innerHTML=html;if(selectedDate)showDayEvents(selectedDate);
 }
 function selectCalDay(dk){selectedDate=dk;renderCalendar();showDayEvents(dk);}
-function showDayEvents(dk){const p=dk.split('-');document.getElementById('dayTitle').textContent=parseInt(p[1])+'月'+parseInt(p[2])+'日';const evs=events.filter(e=>e.date===dk);const el=document.getElementById('dayEvents');if(!evs.length){el.innerHTML='<div style="font-size:12px;color:var(--g4)">當日無排程</div>';return;}const wl={A:'帥哥宗彥',B:'胖胖誓恩',both:'兩人'};const wc={A:'#f0f0f0',B:'#888',both:'#ffd60a'};el.innerHTML=evs.map((e,i)=>`<div class="event-item"><div class="event-dot" style="background:${wc[e.who]}"></div><div style="flex:1"><div style="font-size:14px;color:var(--w)">${e.title}</div><div style="font-size:11px;color:var(--g4);margin-top:3px">${e.time?e.time+' · ':''}${e.note||''}</div><div style="font-size:10px;color:${wc[e.who]};margin-top:3px;text-transform:uppercase;letter-spacing:0.06em">${wl[e.who]}${e.remind&&e.remind!=='0'?' · ⏰ '+e.remind+'分前':''}</div></div><button class="event-del" onclick="deleteEvent('${dk}',${i})">×</button></div>`).join('');}
+function showDayEvents(dk){const p=dk.split('-');document.getElementById('dayTitle').textContent=parseInt(p[1])+'月'+parseInt(p[2])+'日';const evs=events.filter(e=>e.date===dk);const el=document.getElementById('dayEvents');if(!evs.length){el.innerHTML='<div style="font-size:12px;color:var(--g4)">當日無排程</div>';return;}const wl={A:'Yen',B:'4N',both:'兩人'};const wc={A:'#f0f0f0',B:'#888',both:'#ffd60a'};el.innerHTML=evs.map((e,i)=>`<div class="event-item"><div class="event-dot" style="background:${wc[e.who]}"></div><div style="flex:1"><div style="font-size:14px;color:var(--w)">${e.title}</div><div style="font-size:11px;color:var(--g4);margin-top:3px">${e.time?e.time+' · ':''}${e.note||''}</div><div style="font-size:10px;color:${wc[e.who]};margin-top:3px;text-transform:uppercase;letter-spacing:0.06em">${wl[e.who]}${e.remind&&e.remind!=='0'?' · ⏰ '+e.remind+'分前':''}</div></div><button class="event-del" onclick="deleteEvent('${dk}',${i})">×</button></div>`).join('');}
 function deleteEvent(dk,i){const all=events.reduce((a,e,j)=>{if(e.date===dk)a.push(j);return a;},[]);events.splice(all[i],1);save('events',events);renderCalendar();showDayEvents(dk);showToast('排程已刪除');}
 function changeMonth(dir){calMonth+=dir;if(calMonth>11){calMonth=0;calYear++;}if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
 function addEvent(){const title=document.getElementById('evTitle').value.trim();const date=document.getElementById('evDate').value;if(!title||!date){showToast('請填寫標題與日期');return;}const ev={title,date,time:document.getElementById('evTime').value,who:document.getElementById('evWho').value,note:document.getElementById('evNote').value.trim(),remind:document.getElementById('evRemind').value};events.push(ev);save('events',events);document.getElementById('evTitle').value='';document.getElementById('evNote').value='';scheduleEventNotif(ev);showToast('排程已新增！');selectedDate=date;renderCalendar();}
 
 function addMemo(){const text=document.getElementById('memoText').value.trim();if(!text){showToast('請輸入備忘內容');return;}const now=new Date();memos.unshift({who:document.getElementById('memoWho').value,text,date:now.toLocaleDateString('zh-TW'),time:now.toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'}),id:now.getTime()});save('memos',memos);document.getElementById('memoText').value='';renderMemos(curMemoFilter);showToast('備忘已儲存！');}
-function renderMemos(filter){curMemoFilter=filter;const el=document.getElementById('memoList');const filtered=filter==='all'?memos:memos.filter(m=>m.who===filter);if(!filtered.length){el.innerHTML='<div class="empty">尚無備忘</div>';return;}const wn={A:'帥哥宗彥',B:'胖胖誓恩'};el.innerHTML=filtered.map(m=>`<div class="memo-item"><div style="display:flex;justify-content:space-between"><div class="memo-who">${wn[m.who]}</div><div class="memo-date">${m.date} ${m.time}</div></div><div class="memo-text">${m.text.replace(/\n/g,'<br>')}</div><button class="memo-del" onclick="deleteMemo(${m.id})">×</button></div>`).join('');}
+function renderMemos(filter){curMemoFilter=filter;const el=document.getElementById('memoList');const filtered=filter==='all'?memos:memos.filter(m=>m.who===filter);if(!filtered.length){el.innerHTML='<div class="empty">尚無備忘</div>';return;}const wn={A:'Yen',B:'4N'};el.innerHTML='<div class="memo-grid">'+filtered.map(m=>`<div class="memo-item"><div class="memo-who">${wn[m.who]}</div><div class="memo-text">${m.text.replace(/\n/g,'<br>')}</div><div class="memo-date" style="margin-top:8px">${m.date}</div><button class="memo-del" onclick="deleteMemo(${m.id})">×</button></div>`).join('')+'</div>';}
 function deleteMemo(id){memos=memos.filter(m=>m.id!==id);save('memos',memos);renderMemos(curMemoFilter);showToast('備忘已刪除');}
 function filterMemo(filter,btn){document.querySelectorAll('#page-memo .filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderMemos(filter);}
 
@@ -656,7 +807,7 @@ function updateReport(){
   document.getElementById('hoursBarB').style.width=Math.round(mB/maxM*100)+'%';
   const cA=logs.filter(l=>l.emp==='A'&&l.type==='in').length;const cB=logs.filter(l=>l.emp==='B'&&l.type==='in').length;
   const avgA=cA>0?Math.round(mA/cA):0,avgB=cB>0?Math.round(mB/cB):0;
-  document.getElementById('avgHours').innerHTML=`帥哥宗彥 平均 ${Math.floor(avgA/60)}h${avgA%60}m／天<br>胖胖誓恩 平均 ${Math.floor(avgB/60)}h${avgB%60}m／天`;
+  document.getElementById('avgHours').innerHTML=`Yen 平均 ${Math.floor(avgA/60)}h${avgA%60}m／天<br>4N 平均 ${Math.floor(avgB/60)}h${avgB%60}m／天`;
   const tc={'拍攝':0,'剪輯':0,'其他':0};
   logs.filter(l=>l.emp==='A'&&l.detail&&tc[l.detail]!==undefined).forEach(l=>tc[l.detail]++);
   document.getElementById('cShoot').textContent=tc['拍攝'];document.getElementById('cEdit').textContent=tc['剪輯'];document.getElementById('cOther').textContent=tc['其他'];
