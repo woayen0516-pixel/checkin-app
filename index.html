@@ -10,389 +10,225 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <title>打卡系統</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Bebas+Neue&display=swap" rel="stylesheet">
 <style>
-:root {
-  --black: #0a0a0a;
-  --black2: #111111;
-  --black3: #1a1a1a;
-  --black4: #242424;
-  --gray1: #2e2e2e;
-  --gray2: #3d3d3d;
-  --gray3: #555555;
-  --gray4: #888888;
-  --gray5: #aaaaaa;
-  --gray6: #cccccc;
-  --white: #f5f5f5;
-  --white2: #e8e8e8;
-  --accent: #ffffff;
-  --danger: #ff4444;
-  --success: #44ff88;
-  --warn: #ffcc00;
-  --safe-top: env(safe-area-inset-top,0px);
-  --safe-bot: env(safe-area-inset-bottom,0px);
-  --mono: 'DM Mono', monospace;
-  --display: 'Bebas Neue', sans-serif;
+:root{
+  --bg:#0a0a0a;--s1:#111;--s2:#1a1a1a;--s3:#222;--s4:#2a2a2a;
+  --g1:#333;--g2:#444;--g3:#666;--g4:#888;--g5:#aaa;--g6:#ccc;
+  --w:#f0f0f0;--w2:#e0e0e0;
+  --green:#30d158;--red:#ff453a;--yellow:#ffd60a;--blue:#0a84ff;
+  --safe-t:env(safe-area-inset-top,0px);--safe-b:env(safe-area-inset-bottom,0px);
+  --mono:'DM Mono',monospace;--disp:'Bebas Neue',sans-serif;
+  --r:14px;--r-sm:10px;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;background:var(--black);color:var(--white);font-family:var(--mono);overflow:hidden}
+html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--mono);overflow:hidden}
 .app{display:flex;flex-direction:column;height:100dvh;height:100vh}
 
-/* ── TOPBAR ── */
-.topbar{
-  background:var(--black2);
-  border-bottom:1px solid var(--gray1);
-  padding:0 16px;
-  padding-top:calc(10px + var(--safe-top));
-  padding-bottom:10px;
-  display:flex;align-items:center;gap:12px;flex-shrink:0;
-}
-.topbar-logo{font-family:var(--display);font-size:22px;letter-spacing:0.08em;color:var(--white)}
+.topbar{background:rgba(17,17,17,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:0.5px solid var(--g1);padding:0 20px 12px;padding-top:calc(12px + var(--safe-t));display:flex;align-items:center;flex-shrink:0}
+.topbar-logo{font-family:var(--disp);font-size:20px;letter-spacing:0.12em}
 .topbar-spacer{flex:1}
-.topbar-clock{font-size:11px;color:var(--gray4);letter-spacing:0.1em}
-.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--gray3);display:inline-block;margin-right:6px;transition:background 0.3s}
-.sync-dot.live{background:var(--success);box-shadow:0 0 6px var(--success)}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--g2);display:inline-block;margin-right:8px;transition:all 0.4s}
+.sync-dot.live{background:var(--green);box-shadow:0 0 8px var(--green)}
+.topbar-clock{font-size:12px;color:var(--g4);letter-spacing:0.06em}
 
-/* ── SCROLL ── */
-.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 14px calc(14px + var(--safe-bot))}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 16px calc(16px + var(--safe-b))}
 
-/* ── BOTTOM NAV ── */
-.bottom-nav{
-  background:var(--black2);border-top:1px solid var(--gray1);
-  display:flex;padding-bottom:var(--safe-bot);flex-shrink:0;
-}
-.nav-item{
-  flex:1;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;padding:9px 4px;cursor:pointer;border:none;
-  background:none;color:var(--gray3);transition:color 0.2s;gap:3px;
-}
-.nav-item.active{color:var(--white)}
-.nav-icon{font-size:18px;line-height:1}
-.nav-label{font-size:9px;letter-spacing:0.08em;font-family:var(--mono);text-transform:uppercase}
+.bottom-nav{background:rgba(17,17,17,0.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:0.5px solid var(--g1);display:flex;flex-shrink:0;padding-bottom:calc(var(--safe-b) + 4px)}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 4px 6px;cursor:pointer;border:none;background:none;color:var(--g3);transition:color 0.2s;gap:4px;min-height:56px}
+.nav-item.active{color:var(--w)}
+.nav-icon{font-size:20px;line-height:1}
+.nav-label{font-size:9px;letter-spacing:0.06em;font-family:var(--mono)}
 
-/* ── PAGES ── */
-.page{display:none}
-.page.active{display:block}
+.page{display:none}.page.active{display:block}
 
-/* ── CARDS ── */
-.card{
-  background:var(--black3);
-  border:1px solid var(--gray1);
-  border-radius:2px;
-  padding:16px;margin-bottom:10px;
-}
-.card-label{
-  font-size:9px;letter-spacing:0.15em;color:var(--gray4);
-  text-transform:uppercase;margin-bottom:12px;
-  display:flex;align-items:center;gap:8px;
-}
-.card-label::after{content:'';flex:1;height:1px;background:var(--gray1)}
+/* Apple-style sections */
+.section{margin-bottom:28px}
+.section-header{font-size:11px;letter-spacing:0.1em;color:var(--g4);text-transform:uppercase;margin-bottom:8px;padding:0 4px}
+.group{background:var(--s2);border-radius:var(--r);overflow:hidden}
+.divider{height:0.5px;background:var(--g1)}
 
-/* ── EMP CARDS ── */
-.emp-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.emp-card{
-  background:var(--black4);border:1px solid var(--gray1);
-  border-radius:2px;padding:16px 12px;text-align:center;
-  cursor:pointer;transition:all 0.2s;
-}
-.emp-card.selected{border-color:var(--white);background:var(--black3)}
-.avatar{
-  width:48px;height:48px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  font-size:13px;font-weight:500;margin:0 auto 8px;
-  border:1px solid var(--gray2);font-family:var(--mono);letter-spacing:0.05em;
-}
-.av-a{background:var(--black2);color:var(--white)}
-.av-b{background:var(--black2);color:var(--white)}
-.emp-name{font-size:12px;font-family:var(--mono);color:var(--white2);margin-bottom:5px}
-.status-row{font-size:10px;color:var(--gray4);display:flex;align-items:center;justify-content:center;gap:4px;letter-spacing:0.05em}
-.dot{width:6px;height:6px;border-radius:50%;display:inline-block}
-.dot-in{background:var(--success);box-shadow:0 0 4px var(--success)}
-.dot-out{background:var(--gray3)}
+/* Employee cards */
+.emp-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.emp-card{background:var(--s2);border-radius:var(--r);padding:18px 12px;text-align:center;cursor:pointer;transition:all 0.2s;border:1.5px solid transparent}
+.emp-card.selected{border-color:var(--w);background:var(--s3)}
+.avatar{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;margin:0 auto 10px;background:var(--s3);border:1px solid var(--g1)}
+.emp-name{font-size:13px;color:var(--w2);margin-bottom:6px}
+.status-row{font-size:11px;color:var(--g4);display:flex;align-items:center;justify-content:center;gap:5px}
+.dot{width:6px;height:6px;border-radius:50%;display:inline-block;flex-shrink:0}
+.dot-in{background:var(--green);box-shadow:0 0 5px var(--green)}
+.dot-out{background:var(--g2)}
 
-/* ── SCAN AREA ── */
-.scan-area{
-  border:1px dashed var(--gray2);border-radius:2px;
-  padding:28px 16px;text-align:center;cursor:pointer;
-  transition:all 0.2s;background:var(--black4);
-}
-.scan-area:active{border-color:var(--white);background:var(--black3)}
-.scan-icon-wrap{
-  width:64px;height:64px;border:1px solid var(--gray2);border-radius:2px;
-  margin:0 auto 12px;display:flex;align-items:center;justify-content:center;
-  font-size:28px;
-}
-.scan-text{font-size:13px;letter-spacing:0.05em;color:var(--white2);margin-bottom:4px}
-.scan-sub{font-size:10px;color:var(--gray4);letter-spacing:0.05em}
-.scan-ok{
-  background:var(--black3);border:1px solid var(--gray2);
-  border-left:2px solid var(--success);
-  border-radius:2px;padding:10px 14px;margin-top:10px;
-  font-size:11px;color:var(--success);display:none;letter-spacing:0.05em;
-}
+/* Action area */
+.action-header{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+.action-header .name{font-size:17px;color:var(--w)}
+.action-header .sub{font-size:12px;color:var(--g4);margin-top:3px}
+
+/* Task pills */
+.task-pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px}
+.task-pill{padding:8px 16px;border-radius:100px;border:1px solid var(--g1);background:var(--s3);font-size:13px;cursor:pointer;color:var(--g5);font-family:var(--mono);transition:all 0.15s}
+.task-pill.active{background:var(--w);color:var(--bg);border-color:var(--w)}
+
+/* QR scan compact */
+.scan-compact{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--s2);border-radius:var(--r);cursor:pointer;transition:all 0.15s}
+.scan-compact:active{background:var(--s3)}
+.scan-icon-box{width:36px;height:36px;background:var(--s3);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.scan-ok{background:rgba(48,209,88,0.1);border:0.5px solid rgba(48,209,88,0.3);border-radius:var(--r-sm);padding:10px 14px;margin-top:8px;font-size:12px;color:var(--green);display:none}
 .scan-ok.show{display:block}
 
-/* ── ACTION CARD ── */
-.action-header{display:flex;align-items:center;gap:12px;margin-bottom:14px}
-.action-info .name{font-size:14px;letter-spacing:0.06em;color:var(--white)}
-.action-info .sub{font-size:10px;color:var(--gray4);letter-spacing:0.08em;margin-top:2px}
+/* Checkin button */
+.checkin-btn{width:100%;padding:17px;border-radius:var(--r);border:none;font-size:16px;font-family:var(--disp);letter-spacing:0.12em;margin-top:16px;cursor:pointer;transition:all 0.2s}
+.checkin-btn:active{opacity:0.85;transform:scale(0.99)}
+.btn-in{background:var(--w);color:var(--bg)}
+.btn-out{background:rgba(255,69,58,0.12);color:var(--red);border:1px solid rgba(255,69,58,0.3)}
 
-/* ── TASK BTNS ── */
-.task-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:4px}
-.task-btn{
-  padding:10px 4px;border:1px solid var(--gray1);border-radius:2px;
-  background:var(--black4);font-size:11px;letter-spacing:0.04em;
-  cursor:pointer;text-align:center;transition:all 0.15s;
-  color:var(--gray5);font-family:var(--mono);
-}
-.task-btn.active{border-color:var(--white);background:var(--black2);color:var(--white)}
+/* Amount */
+.amount-section{margin-top:16px;padding-top:16px;border-top:0.5px solid var(--g1)}
+.amount-lbl{font-size:10px;letter-spacing:0.1em;color:var(--yellow);text-transform:uppercase;margin-bottom:10px}
+.amount-wrap{position:relative;margin-bottom:10px}
+.amount-prefix{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--g4)}
+.amount-input{width:100%;padding:14px 14px 14px 28px;border:1px solid var(--g1);border-radius:var(--r-sm);background:var(--s3);font-size:24px;font-weight:300;color:var(--w);outline:none;font-family:var(--mono)}
+.amount-input:focus{border-color:var(--g3)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-group{margin-bottom:10px}
+.form-label{font-size:10px;letter-spacing:0.1em;color:var(--g4);margin-bottom:6px;display:block;text-transform:uppercase}
+.form-input{width:100%;padding:12px 14px;border:1px solid var(--g1);border-radius:var(--r-sm);background:var(--s3);color:var(--w);font-size:14px;outline:none;font-family:var(--mono);-webkit-appearance:none}
+.form-input:focus{border-color:var(--g3)}
+.checkin-msg{font-size:12px;color:var(--g4);padding:6px 0;line-height:1.7}
+.amt-preview{background:rgba(255,214,10,0.06);border:0.5px solid rgba(255,214,10,0.2);border-radius:var(--r-sm);padding:12px 14px;display:none;align-items:center;justify-content:space-between}
+.amt-preview.show{display:flex}
 
-/* ── AMOUNT ── */
-.amount-section{margin-top:14px;padding-top:14px;border-top:1px solid var(--gray1)}
-.amount-lbl{font-size:9px;letter-spacing:0.15em;color:var(--warn);text-transform:uppercase;margin-bottom:8px}
-.amount-wrap{position:relative}
-.amount-prefix{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;color:var(--gray4);font-family:var(--mono)}
-.amount-input{
-  width:100%;padding:13px 12px 13px 26px;
-  border:1px solid var(--gray2);border-radius:2px;
-  background:var(--black4);font-size:22px;font-weight:500;
-  color:var(--white);outline:none;font-family:var(--mono);
-}
-.amount-input:focus{border-color:var(--gray5)}
-.amount-preview{
-  margin-top:8px;border:1px solid var(--gray2);border-left:2px solid var(--warn);
-  border-radius:2px;padding:10px 14px;display:none;align-items:center;gap:10px;background:var(--black4);
-}
-.amount-preview.show{display:flex}
-.checkin-msg{font-size:11px;color:var(--gray4);padding:8px 0;letter-spacing:0.04em;line-height:1.6}
-
-/* ── CHECKIN BTN ── */
-.checkin-btn{
-  width:100%;padding:16px;border-radius:2px;border:none;
-  font-size:14px;font-family:var(--display);letter-spacing:0.15em;
-  margin-top:14px;cursor:pointer;transition:all 0.2s;
-}
-.checkin-btn:active{transform:scale(0.98)}
-.btn-in{background:var(--white);color:var(--black)}
-.btn-out{background:var(--black4);color:var(--danger);border:1px solid var(--danger)}
-
-/* ── INSTALL BANNER ── */
-.install-banner{
-  border:1px solid var(--gray2);border-radius:2px;padding:12px 14px;
-  margin-bottom:12px;display:none;align-items:center;gap:10px;background:var(--black3);
-}
+/* Install banner */
+.install-banner{background:var(--s2);border-radius:var(--r);padding:14px 16px;margin-bottom:20px;display:none;align-items:center;gap:12px}
 .install-banner.show{display:flex}
-.install-banner-text{flex:1;font-size:11px;color:var(--gray5);letter-spacing:0.04em}
-.install-btn{
-  background:var(--white);color:var(--black);border:none;border-radius:2px;
-  padding:7px 14px;font-size:11px;font-family:var(--mono);letter-spacing:0.08em;cursor:pointer;
-}
+.install-banner-text{flex:1;font-size:12px;color:var(--g5);line-height:1.5}
+.install-btn{background:var(--w);color:var(--bg);border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-family:var(--mono);cursor:pointer;white-space:nowrap}
 
-/* ── LOG LIST ── */
-.log-item{
-  display:flex;align-items:flex-start;gap:10px;
-  padding:12px 0;border-bottom:1px solid var(--gray1);
-}
+/* Log list */
+.log-item{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:0.5px solid var(--g1);position:relative;overflow:hidden;transition:background 0.15s}
 .log-item:last-child{border-bottom:none}
-.log-time{font-size:10px;color:var(--gray4);min-width:54px;line-height:1.7;flex-shrink:0;letter-spacing:0.04em}
-.log-name{font-size:12px;letter-spacing:0.05em;margin-bottom:2px;color:var(--white2)}
-.log-detail{font-size:10px;color:var(--gray4);letter-spacing:0.04em}
-.badge{
-  display:inline-block;padding:2px 8px;border-radius:1px;
-  font-size:9px;letter-spacing:0.1em;font-family:var(--mono);
-  text-transform:uppercase;
-}
-.badge-in{background:transparent;color:var(--success);border:1px solid var(--success)}
-.badge-out{background:transparent;color:var(--danger);border:1px solid var(--danger)}
-.money-badge{
-  background:transparent;color:var(--warn);border:1px solid var(--warn);
-  padding:1px 7px;border-radius:1px;font-size:9px;font-family:var(--mono);
-  display:inline-block;margin-top:3px;letter-spacing:0.06em;
-}
+.log-av{width:34px;height:34px;border-radius:50%;background:var(--s3);border:0.5px solid var(--g1);display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0}
+.log-body{flex:1;min-width:0}
+.log-name{font-size:14px;color:var(--w);margin-bottom:3px}
+.log-meta{font-size:11px;color:var(--g4)}
+.log-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.log-time-label{font-size:10px;color:var(--g4)}
+.badge{display:inline-block;padding:3px 9px;border-radius:100px;font-size:10px;letter-spacing:0.06em;font-family:var(--mono)}
+.badge-in{background:rgba(48,209,88,0.12);color:var(--green)}
+.badge-out{background:rgba(255,69,58,0.12);color:var(--red)}
+.money-badge{background:rgba(255,214,10,0.1);color:var(--yellow);padding:2px 8px;border-radius:100px;font-size:10px;font-family:var(--mono);display:inline-block}
 
-/* ── FILTER ROW ── */
-.filter-row{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;padding-bottom:2px}
-.filter-btn{
-  padding:5px 12px;border:1px solid var(--gray1);border-radius:2px;
-  background:transparent;font-size:10px;color:var(--gray4);
-  cursor:pointer;white-space:nowrap;flex-shrink:0;
-  font-family:var(--mono);letter-spacing:0.08em;transition:all 0.15s;
-}
-.filter-btn.active{border-color:var(--white);color:var(--white);background:var(--black3)}
+/* Swipe actions */
+.log-actions{position:absolute;right:0;top:0;bottom:0;display:flex;transform:translateX(100%);transition:transform 0.25s cubic-bezier(0.32,0.72,0,1)}
+.log-item.swiped .log-actions{transform:translateX(0)}
+.log-action-btn{height:100%;padding:0 20px;border:none;cursor:pointer;font-size:12px;font-family:var(--mono);letter-spacing:0.06em;display:flex;align-items:center}
+.log-action-edit{background:var(--blue);color:#fff}
+.log-action-del{background:var(--red);color:#fff}
 
-/* ── QR PAGE ── */
-.qr-card{text-align:center}
-.qr-canvas{
-  border:1px solid var(--gray2);padding:16px;background:var(--white);
-  margin:14px auto;display:block;border-radius:2px;
-}
-.qr-hint{font-size:10px;color:var(--gray4);letter-spacing:0.06em}
+/* Filter pills */
+.filter-row{display:flex;gap:8px;margin-bottom:16px;overflow-x:auto;padding-bottom:2px}
+.filter-btn{padding:6px 14px;border-radius:100px;border:1px solid var(--g1);background:transparent;font-size:12px;color:var(--g4);cursor:pointer;white-space:nowrap;flex-shrink:0;font-family:var(--mono);transition:all 0.15s}
+.filter-btn.active{background:var(--w);border-color:var(--w);color:var(--bg)}
 
-/* ── CALENDAR ── */
-.cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-.cal-nav{
-  background:var(--black3);border:1px solid var(--gray1);border-radius:2px;
-  padding:7px 14px;font-size:11px;cursor:pointer;color:var(--gray5);
-  font-family:var(--mono);letter-spacing:0.08em;transition:all 0.15s;
-}
-.cal-nav:active{background:var(--gray1);color:var(--white)}
-.cal-title{font-family:var(--display);font-size:20px;letter-spacing:0.08em;color:var(--white)}
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
-.cal-day-label{text-align:center;font-size:9px;color:var(--gray3);padding:4px 0;letter-spacing:0.08em}
-.cal-day{
-  min-height:44px;border:1px solid var(--gray1);border-radius:1px;padding:4px;
-  cursor:pointer;background:var(--black3);transition:all 0.15s;
-}
-.cal-day:active{background:var(--black4)}
-.cal-day.today{border-color:var(--white)}
-.cal-day.selected{border-color:var(--white);background:var(--black4)}
-.cal-day.has-event{border-color:var(--gray3)}
-.cal-day.other-month{opacity:0.25}
-.cal-num{font-size:11px;font-family:var(--mono);color:var(--gray5)}
-.cal-day.today .cal-num{color:var(--white)}
+/* QR */
+.qr-canvas{border-radius:var(--r-sm);padding:14px;background:white;margin:14px auto;display:block}
+.qr-hint{font-size:11px;color:var(--g4);text-align:center;letter-spacing:0.04em}
+
+/* Calendar */
+.cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.cal-nav{background:var(--s2);border:none;border-radius:10px;padding:8px 16px;font-size:14px;cursor:pointer;color:var(--g5);font-family:var(--mono)}
+.cal-nav:active{background:var(--s3)}
+.cal-title{font-family:var(--disp);font-size:22px;letter-spacing:0.08em}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-day-label{text-align:center;font-size:10px;color:var(--g3);padding:4px 0}
+.cal-day{min-height:44px;border-radius:8px;padding:5px;cursor:pointer;background:var(--s2);transition:all 0.15s}
+.cal-day:active{background:var(--s3)}
+.cal-day.today{background:var(--s3);outline:1.5px solid var(--w)}
+.cal-day.selected{outline:1.5px solid var(--w)}
+.cal-day.has-event{outline:1px solid var(--g2)}
+.cal-day.other-month{opacity:0.2}
+.cal-num{font-size:12px;color:var(--g5)}
+.cal-day.today .cal-num{color:var(--w)}
 .cal-dots{display:flex;flex-wrap:wrap;gap:2px;margin-top:3px}
 .cal-dot{width:4px;height:4px;border-radius:50%}
-
-.event-item{
-  display:flex;align-items:flex-start;gap:10px;
-  padding:10px 0;border-bottom:1px solid var(--gray1);
-}
+.event-item{display:flex;align-items:flex-start;gap:10px;padding:12px 0;border-bottom:0.5px solid var(--g1)}
 .event-item:last-child{border-bottom:none}
-.event-dot{width:8px;height:8px;border-radius:50%;margin-top:3px;flex-shrink:0}
-.event-del{border:none;background:none;cursor:pointer;color:var(--gray3);font-size:18px;padding:0 4px;line-height:1;transition:color 0.15s}
-.event-del:hover{color:var(--danger)}
+.event-dot{width:8px;height:8px;border-radius:50%;margin-top:4px;flex-shrink:0}
+.event-del{border:none;background:none;cursor:pointer;color:var(--g3);font-size:20px;padding:0 4px;line-height:1}
 
-/* ── FORM ── */
-.form-group{margin-bottom:10px}
-.form-label{font-size:9px;letter-spacing:0.12em;color:var(--gray4);margin-bottom:5px;display:block;text-transform:uppercase}
-.form-input{
-  width:100%;padding:11px 12px;border:1px solid var(--gray1);border-radius:2px;
-  background:var(--black4);color:var(--white);font-size:13px;outline:none;
-  font-family:var(--mono);-webkit-appearance:none;
-}
-.form-input:focus{border-color:var(--gray4)}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.add-btn{
-  background:var(--white);color:var(--black);border:none;border-radius:2px;
-  padding:13px 20px;font-size:12px;letter-spacing:0.1em;
-  font-family:var(--mono);cursor:pointer;width:100%;margin-top:4px;transition:all 0.15s;
-}
-.add-btn:active{background:var(--gray6)}
+/* Form */
+.add-btn{background:var(--w);color:var(--bg);border:none;border-radius:var(--r-sm);padding:14px 20px;font-size:14px;font-family:var(--mono);cursor:pointer;width:100%;margin-top:6px}
+.add-btn:active{background:var(--g6)}
 
-/* ── STATS ── */
-.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
-.stat-card{background:var(--black3);border:1px solid var(--gray1);border-radius:2px;padding:14px}
-.stat-num{font-family:var(--display);font-size:28px;letter-spacing:0.04em;color:var(--white)}
-.stat-lbl{font-size:9px;color:var(--gray4);margin-top:3px;letter-spacing:0.08em;text-transform:uppercase}
-.stat-card.accent .stat-num{color:var(--warn)}
-.stat-card.success .stat-num{color:var(--success)}
+/* Memo */
+.memo-item{background:var(--s2);border-radius:var(--r);padding:14px 16px;margin-bottom:8px;position:relative}
+.memo-who{font-size:10px;letter-spacing:0.1em;color:var(--g4);text-transform:uppercase;margin-bottom:2px}
+.memo-date{font-size:10px;color:var(--g3)}
+.memo-text{font-size:13px;color:var(--g6);line-height:1.7;margin-top:8px}
+.memo-del{position:absolute;top:12px;right:12px;border:none;background:none;cursor:pointer;color:var(--g3);font-size:18px;padding:4px}
+.memo-textarea{width:100%;padding:12px 14px;border:1px solid var(--g1);border-radius:var(--r-sm);background:var(--s3);color:var(--w);font-size:14px;outline:none;font-family:var(--mono);resize:none;height:100px;line-height:1.7;-webkit-appearance:none}
+.memo-textarea:focus{border-color:var(--g3)}
 
-/* ── BAR CHART ── */
-.bar-chart{display:flex;gap:12px;align-items:flex-end;height:64px;margin-bottom:6px}
+/* Stats */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.stat-card{background:var(--s2);border-radius:var(--r);padding:16px}
+.stat-num{font-family:var(--disp);font-size:30px;letter-spacing:0.04em}
+.stat-lbl{font-size:10px;color:var(--g4);margin-top:3px;letter-spacing:0.06em;text-transform:uppercase}
+.stat-card.y .stat-num{color:var(--yellow)}
+.stat-card.g .stat-num{color:var(--green)}
+
+.bar-chart{display:flex;gap:14px;align-items:flex-end;height:60px;margin-bottom:8px}
 .bar-col{flex:1;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
-.bar-fill{width:100%;background:var(--gray2);border-top:1px solid var(--gray4);min-height:2px;transition:height 0.4s}
-.bar-lbl{font-size:9px;color:var(--gray4);margin-top:4px;letter-spacing:0.06em}
+.bar-fill{width:60%;background:var(--g2);border-radius:3px 3px 0 0;min-height:2px;transition:height 0.4s}
+.bar-lbl{font-size:10px;color:var(--g4);margin-top:5px}
 
-/* ── REPORT TABLE ── */
-.rtable{width:100%;border-collapse:collapse;font-size:11px}
-.rtable th{
-  text-align:left;padding:8px 8px;background:var(--black4);
-  color:var(--gray4);border-bottom:1px solid var(--gray1);
-  font-size:9px;letter-spacing:0.1em;text-transform:uppercase;font-weight:400;
-}
-.rtable td{padding:8px 8px;border-bottom:1px solid var(--gray1);color:var(--gray5);font-family:var(--mono)}
+.hours-bar{background:var(--s3);border-radius:2px;height:5px;overflow:hidden;margin-top:8px}
+.hours-fill{height:100%;background:var(--g4);border-radius:2px;transition:width 0.5s}
+
+.rtable{width:100%;border-collapse:collapse;font-size:12px}
+.rtable th{text-align:left;padding:8px 10px;background:var(--s3);color:var(--g4);border-bottom:0.5px solid var(--g1);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;font-weight:400}
+.rtable td{padding:10px;border-bottom:0.5px solid var(--g1);color:var(--g5)}
 .rtable tr:last-child td{border-bottom:none}
 
-/* ── MEMO ── */
-.memo-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
-.memo-item{
-  background:var(--black4);border:1px solid var(--gray1);border-radius:2px;
-  padding:12px;position:relative;
-}
-.memo-item-header{display:flex;align-items:flex-start;gap:8px;margin-bottom:6px}
-.memo-who{font-size:9px;letter-spacing:0.1em;color:var(--gray4);text-transform:uppercase}
-.memo-date{font-size:9px;color:var(--gray3);margin-left:auto}
-.memo-text{font-size:12px;color:var(--gray6);line-height:1.6;letter-spacing:0.02em}
-.memo-del{
-  position:absolute;top:8px;right:8px;border:none;background:none;
-  cursor:pointer;color:var(--gray3);font-size:16px;line-height:1;padding:2px;transition:color 0.15s;
-}
-.memo-del:hover{color:var(--danger)}
-.memo-textarea{
-  width:100%;padding:11px 12px;border:1px solid var(--gray1);border-radius:2px;
-  background:var(--black4);color:var(--white);font-size:13px;outline:none;
-  font-family:var(--mono);resize:none;height:90px;line-height:1.6;
-  -webkit-appearance:none;
-}
-.memo-textarea:focus{border-color:var(--gray4)}
+.export-btn{display:block;width:100%;padding:14px;border-radius:var(--r);background:var(--s2);color:var(--g5);font-size:13px;cursor:pointer;margin-top:12px;text-align:center;font-family:var(--mono);border:none}
+.export-btn:active{background:var(--s3)}
 
-/* ── SECTION HEADING ── */
-.sec-h{font-family:var(--display);font-size:24px;letter-spacing:0.08em;margin-bottom:16px;color:var(--white)}
+.notif-req{background:rgba(255,214,10,0.06);border:0.5px solid rgba(255,214,10,0.2);border-radius:var(--r);padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px}
+.notif-text{flex:1;font-size:12px;color:var(--g5);line-height:1.5}
+.notif-allow-btn{background:var(--yellow);color:var(--bg);border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-family:var(--mono);cursor:pointer;white-space:nowrap}
 
-/* ── NOTIF BANNER ── */
-.notif-req{
-  border:1px solid var(--gray2);border-left:2px solid var(--warn);
-  border-radius:2px;padding:10px 14px;margin-bottom:12px;
-  display:flex;align-items:center;gap:10px;background:var(--black3);
-}
-.notif-text{flex:1;font-size:10px;color:var(--gray5);letter-spacing:0.04em;line-height:1.5}
-.notif-allow-btn{
-  background:var(--warn);color:var(--black);border:none;border-radius:2px;
-  padding:6px 12px;font-size:10px;font-family:var(--mono);letter-spacing:0.08em;cursor:pointer;
-  white-space:nowrap;
-}
-
-/* ── EXPORT BTN ── */
-.export-btn{
-  display:block;width:100%;padding:14px;border:1px solid var(--gray2);
-  border-radius:2px;background:transparent;color:var(--gray5);
-  font-size:11px;letter-spacing:0.1em;cursor:pointer;margin-top:10px;
-  text-align:center;font-family:var(--mono);text-transform:uppercase;transition:all 0.15s;
-}
-.export-btn:active{border-color:var(--white);color:var(--white)}
-
-/* ── TOAST ── */
-.toast{
-  position:fixed;bottom:calc(58px + var(--safe-bot) + 12px);left:50%;
-  transform:translateX(-50%) translateY(16px);
-  background:var(--white);color:var(--black);
-  padding:9px 18px;border-radius:2px;
-  font-size:11px;letter-spacing:0.08em;opacity:0;
-  transition:all 0.25s;white-space:nowrap;z-index:999;
-  pointer-events:none;font-family:var(--mono);
-}
+.toast{position:fixed;bottom:calc(60px + var(--safe-b) + 14px);left:50%;transform:translateX(-50%) translateY(12px);background:rgba(240,240,240,0.95);backdrop-filter:blur(16px);color:var(--bg);padding:10px 20px;border-radius:100px;font-size:13px;opacity:0;transition:all 0.3s;white-space:nowrap;z-index:998;pointer-events:none;font-family:var(--mono)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-.empty{text-align:center;padding:32px 16px;color:var(--gray3);font-size:11px;letter-spacing:0.08em}
+/* Cheer overlay */
+.cheer-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);z-index:600;display:none;flex-direction:column;align-items:center;justify-content:center;padding:40px}
+.cheer-overlay.show{display:flex}
+.cheer-emoji{font-size:80px;margin-bottom:24px;animation:bounceIn 0.5s cubic-bezier(0.68,-0.55,0.265,1.55) both}
+.cheer-type{font-size:10px;letter-spacing:0.2em;color:var(--g4);text-transform:uppercase;margin-bottom:14px;animation:fadeUp 0.4s 0.15s both}
+.cheer-quote{font-size:20px;line-height:1.7;text-align:center;color:var(--w);font-family:var(--mono);font-style:italic;font-weight:300;animation:fadeUp 0.4s 0.25s both}
+.cheer-time{font-size:13px;color:var(--g4);margin-top:18px;letter-spacing:0.08em;animation:fadeUp 0.4s 0.35s both}
+.cheer-close{margin-top:40px;padding:14px 40px;background:var(--w);color:var(--bg);border:none;border-radius:100px;font-size:14px;font-family:var(--mono);cursor:pointer;animation:fadeUp 0.4s 0.45s both}
+.cheer-close:active{background:var(--g6)}
+@keyframes bounceIn{from{transform:scale(0.2);opacity:0}70%{transform:scale(1.15)}to{transform:scale(1);opacity:1}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
 
-/* notification badge on nav */
-.nav-badge{
-  position:absolute;top:6px;right:calc(50% - 18px);
-  width:6px;height:6px;border-radius:50%;background:var(--danger);
-}
+.particle{position:fixed;width:7px;height:7px;border-radius:50%;pointer-events:none;z-index:601;animation:pFly 0.9s ease-out forwards}
+@keyframes pFly{0%{transform:translate(0,0) scale(1);opacity:1}100%{transform:translate(var(--tx),var(--ty)) scale(0);opacity:0}}
 
-/* horizontal divider */
-.divider{height:1px;background:var(--gray1);margin:14px 0}
+/* Edit modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:500;display:none;align-items:flex-end;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal-sheet{background:var(--s2);border-radius:var(--r) var(--r) 0 0;padding:20px 20px calc(20px + var(--safe-b));width:100%;max-width:480px;animation:slideUp 0.3s cubic-bezier(0.32,0.72,0,1)}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-handle{width:36px;height:4px;background:var(--g2);border-radius:2px;margin:0 auto 20px}
+.modal-title{font-size:16px;margin-bottom:20px;color:var(--w)}
 
-/* progress bar for work hours */
-.hours-bar{background:var(--black4);border-radius:1px;height:6px;overflow:hidden;margin-top:6px}
-.hours-fill{height:100%;background:var(--gray4);border-radius:1px;transition:width 0.5s}
-
-/* tabs inside card */
-.tab-row{display:flex;gap:0;border-bottom:1px solid var(--gray1);margin-bottom:14px}
-.tab{
-  padding:8px 14px;font-size:10px;letter-spacing:0.1em;
-  color:var(--gray4);cursor:pointer;border-bottom:2px solid transparent;
-  font-family:var(--mono);text-transform:uppercase;transition:all 0.15s;
-  background:none;border-top:none;border-left:none;border-right:none;
-}
-.tab.active{color:var(--white);border-bottom-color:var(--white)}
+.sec-h{font-family:var(--disp);font-size:26px;letter-spacing:0.08em;margin-bottom:20px}
+.empty{text-align:center;padding:40px 16px;color:var(--g3);font-size:13px}
 </style>
 </head>
 <body>
 <div class="app">
-
-<!-- TOPBAR -->
 <div class="topbar">
   <div class="topbar-logo">CHECKIN</div>
   <div class="topbar-spacer"></div>
@@ -400,124 +236,101 @@ html,body{height:100%;background:var(--black);color:var(--white);font-family:var
   <div class="topbar-clock" id="clock">--:--</div>
 </div>
 
-<!-- SCROLL CONTENT -->
 <div class="scroll" id="mainScroll">
 
-  <!-- ① 打卡 -->
+  <!-- 打卡 -->
   <div class="page active" id="page-checkin">
     <div class="install-banner" id="installBanner">
-      <div class="install-banner-text">安裝 APP 到桌面，隨時快速打卡</div>
+      <div class="install-banner-text">安裝 APP 到桌面，快速打卡</div>
       <button class="install-btn" id="installBtn">安裝</button>
     </div>
-
-    <div class="card">
-      <div class="card-label">員工選擇</div>
+    <div class="section">
+      <div class="section-header">員工</div>
       <div class="emp-grid">
         <div class="emp-card selected" id="emp-card-A" onclick="selectEmp('A')">
-          <div class="avatar av-a">宗彥</div>
+          <div class="avatar">宗彥</div>
           <div class="emp-name">帥哥宗彥</div>
           <div class="status-row" id="status-a"><span class="dot dot-out"></span>未打卡</div>
         </div>
         <div class="emp-card" id="emp-card-B" onclick="selectEmp('B')">
-          <div class="avatar av-b">誓恩</div>
+          <div class="avatar">誓恩</div>
           <div class="emp-name">胖胖誓恩</div>
           <div class="status-row" id="status-b"><span class="dot dot-out"></span>未打卡</div>
         </div>
       </div>
     </div>
-
-    <div class="card">
-      <div class="card-label">QR Code 打卡</div>
-      <div class="scan-area" id="scanArea" onclick="openCamera()">
-        <div class="scan-icon-wrap">📷</div>
-        <div class="scan-text">開啟相機掃描 QR Code</div>
-        <div class="scan-sub">點擊啟動相機</div>
+    <div class="section">
+      <div class="section-header">打卡</div>
+      <div style="background:var(--s2);border-radius:var(--r);padding:20px">
+        <div class="action-header">
+          <div class="avatar" id="actionAv" style="width:42px;height:42px;font-size:13px;margin:0">宗彥</div>
+          <div>
+            <div class="name" id="actionName">帥哥宗彥</div>
+            <div class="sub" id="actionSub">今日未打卡</div>
+          </div>
+        </div>
+        <div id="secA">
+          <div style="font-size:10px;color:var(--g4);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:10px">工作項目（可選）</div>
+          <div class="task-pills">
+            <button class="task-pill" id="task-拍攝" onclick="selectTask('拍攝')">🎬 拍攝</button>
+            <button class="task-pill" id="task-剪輯" onclick="selectTask('剪輯')">✂️ 剪輯</button>
+            <button class="task-pill" id="task-其他" onclick="selectTask('其他')">📋 其他</button>
+          </div>
+        </div>
+        <div id="secB" style="display:none">
+          <div class="checkin-msg" id="bMsg">上班打卡後，下班時登錄今日跑車金額及里程。</div>
+          <div id="bAmtSec" style="display:none">
+            <div class="amount-lbl">今日跑車結算</div>
+            <div class="amount-wrap"><span class="amount-prefix">$</span><input type="number" class="amount-input" id="carAmount" placeholder="0" min="0" inputmode="numeric" oninput="updateAmtPreview()"></div>
+            <div class="form-row" style="gap:8px;margin-bottom:10px">
+              <div class="form-group" style="margin:0"><label class="form-label">起始里程 km</label><input class="form-input" type="number" id="kmStart" placeholder="0" inputmode="numeric" oninput="updateAmtPreview()"></div>
+              <div class="form-group" style="margin:0"><label class="form-label">結束里程 km</label><input class="form-input" type="number" id="kmEnd" placeholder="0" inputmode="numeric" oninput="updateAmtPreview()"></div>
+            </div>
+            <div class="amt-preview" id="amtPreview">
+              <div><div style="font-size:9px;color:var(--yellow);letter-spacing:0.1em;text-transform:uppercase">金額</div><div style="font-family:var(--disp);font-size:22px;color:var(--yellow)" id="amtVal">$0</div></div>
+              <div style="text-align:right"><div style="font-size:9px;color:var(--g4);letter-spacing:0.1em;text-transform:uppercase">里程</div><div style="font-family:var(--disp);font-size:22px;color:var(--g5)" id="kmVal">0 KM</div></div>
+            </div>
+          </div>
+        </div>
+        <button class="checkin-btn btn-in" id="checkinBtn" onclick="doCheckin()">上班打卡</button>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-header">QR Code 掃描</div>
+      <div class="scan-compact" onclick="openCamera()">
+        <div class="scan-icon-box">📷</div>
+        <div style="flex:1"><div style="font-size:14px;color:var(--w);margin-bottom:2px">開啟相機掃描</div><div style="font-size:11px;color:var(--g4)">點擊啟動相機識別 QR Code</div></div>
+        <div style="font-size:18px;color:var(--g3)">›</div>
       </div>
       <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none" onchange="handleQRFile(this)">
       <div class="scan-ok" id="scanOk"></div>
-      <div style="margin-top:10px;text-align:center">
-        <button onclick="manualCheckin()" style="background:none;border:none;color:var(--gray4);font-size:10px;letter-spacing:0.08em;cursor:pointer;font-family:var(--mono);text-decoration:underline">或直接手動打卡</button>
-      </div>
-    </div>
-
-    <div class="card" id="actionCard">
-      <div class="action-header">
-        <div class="avatar av-a" id="actionAv" style="width:40px;height:40px;font-size:12px;">宗彥</div>
-        <div class="action-info">
-          <div class="name" id="actionName">帥哥宗彥</div>
-          <div class="sub" id="actionSub">今日未打卡</div>
-        </div>
-      </div>
-
-      <!-- A: 工作項目 -->
-      <div id="secA">
-        <div class="card-label" style="margin-bottom:8px;">工作項目（可選）</div>
-        <div class="task-grid">
-          <button class="task-btn" id="task-拍攝" onclick="selectTask('拍攝')">🎬 拍攝</button>
-          <button class="task-btn" id="task-剪輯" onclick="selectTask('剪輯')">✂️ 剪輯</button>
-          <button class="task-btn" id="task-其他" onclick="selectTask('其他')">📋 其他</button>
-        </div>
-      </div>
-
-      <!-- B: 跑車金額（僅下班） -->
-      <div id="secB" style="display:none">
-        <div class="checkin-msg" id="bMsg">上班打卡後，下班時登錄今日跑車金額及里程。</div>
-        <div class="amount-section" id="bAmtSec" style="display:none">
-          <div class="amount-lbl">今日跑車結算</div>
-          <div class="form-group">
-            <label class="form-label">跑車金額（元）</label>
-            <div class="amount-wrap">
-              <span class="amount-prefix">$</span>
-              <input type="number" class="amount-input" id="carAmount" placeholder="0" min="0" inputmode="numeric" oninput="updateAmtPreview()">
-            </div>
-          </div>
-          <div class="form-row" style="gap:8px">
-            <div class="form-group" style="margin:0">
-              <label class="form-label">起始里程 km</label>
-              <input class="form-input" type="number" id="kmStart" placeholder="0" inputmode="numeric">
-            </div>
-            <div class="form-group" style="margin:0">
-              <label class="form-label">結束里程 km</label>
-              <input class="form-input" type="number" id="kmEnd" placeholder="0" inputmode="numeric">
-            </div>
-          </div>
-          <div class="amount-preview" id="amtPreview">
-            <div>
-              <div style="font-size:9px;color:var(--warn);letter-spacing:0.1em;text-transform:uppercase">跑車金額</div>
-              <div style="font-size:20px;font-family:var(--display);letter-spacing:0.08em;color:var(--warn)" id="amtVal">$0</div>
-            </div>
-            <div style="margin-left:auto">
-              <div style="font-size:9px;color:var(--gray4);letter-spacing:0.1em;text-transform:uppercase">里程</div>
-              <div style="font-size:20px;font-family:var(--display);letter-spacing:0.08em;color:var(--gray5)" id="kmVal">0 KM</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <button class="checkin-btn btn-in" id="checkinBtn" onclick="doCheckin()">上班打卡</button>
+      <div style="text-align:center;margin-top:10px"><button onclick="manualCheckin()" style="background:none;border:none;color:var(--g4);font-size:12px;cursor:pointer;font-family:var(--mono);text-decoration:underline">或直接手動打卡</button></div>
     </div>
   </div>
 
-  <!-- ② QR Code -->
+  <!-- QR Code -->
   <div class="page" id="page-qr">
-    <div class="sec-h">QR CODE</div>
-    <div class="card qr-card">
-      <div class="avatar av-a" style="margin:0 auto 10px;width:52px;height:52px;">宗彥</div>
-      <div style="font-size:13px;letter-spacing:0.08em;margin-bottom:2px;color:var(--white2)">帥哥宗彥</div>
-      <div style="font-size:9px;color:var(--gray4);letter-spacing:0.1em;margin-bottom:4px;text-transform:uppercase">員工 A</div>
-      <canvas id="qrA" width="200" height="200" class="qr-canvas"></canvas>
-      <div class="qr-hint">掃描此 QR Code 進行打卡</div>
-    </div>
-    <div class="card qr-card">
-      <div class="avatar av-b" style="margin:0 auto 10px;width:52px;height:52px;">誓恩</div>
-      <div style="font-size:13px;letter-spacing:0.08em;margin-bottom:2px;color:var(--white2)">胖胖誓恩</div>
-      <div style="font-size:9px;color:var(--gray4);letter-spacing:0.1em;margin-bottom:4px;text-transform:uppercase">員工 B</div>
-      <canvas id="qrB" width="200" height="200" class="qr-canvas"></canvas>
-      <div class="qr-hint">掃描此 QR Code 進行打卡</div>
-    </div>
+    <div class="sec-h">QR Code</div>
+    <div class="section"><div class="group">
+      <div style="padding:24px;text-align:center">
+        <div class="avatar" style="margin:0 auto 12px;width:52px;height:52px">宗彥</div>
+        <div style="font-size:15px;margin-bottom:2px">帥哥宗彥</div>
+        <div style="font-size:10px;color:var(--g4);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.1em">員工 A</div>
+        <canvas id="qrA" width="180" height="180" class="qr-canvas"></canvas>
+        <div class="qr-hint">掃描此 QR Code 打卡</div>
+      </div>
+      <div class="divider"></div>
+      <div style="padding:24px;text-align:center">
+        <div class="avatar" style="margin:0 auto 12px;width:52px;height:52px">誓恩</div>
+        <div style="font-size:15px;margin-bottom:2px">胖胖誓恩</div>
+        <div style="font-size:10px;color:var(--g4);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.1em">員工 B</div>
+        <canvas id="qrB" width="180" height="180" class="qr-canvas"></canvas>
+        <div class="qr-hint">掃描此 QR Code 打卡</div>
+      </div>
+    </div></div>
   </div>
 
-  <!-- ③ 紀錄 -->
+  <!-- 打卡紀錄 -->
   <div class="page" id="page-records">
     <div class="sec-h">打卡紀錄</div>
     <div class="filter-row">
@@ -525,834 +338,343 @@ html,body{height:100%;background:var(--black);color:var(--white);font-family:var
       <button class="filter-btn" onclick="filterLog('A',this)">帥哥宗彥</button>
       <button class="filter-btn" onclick="filterLog('B',this)">胖胖誓恩</button>
     </div>
-    <div class="card"><div id="logList"><div class="empty">尚無紀錄</div></div></div>
+    <div style="font-size:11px;color:var(--g3);margin-bottom:10px;text-align:center;letter-spacing:0.04em">← 左滑可編輯或刪除</div>
+    <div class="group" id="logList"><div class="empty">尚無打卡紀錄</div></div>
   </div>
 
-  <!-- ④ 行事曆 -->
+  <!-- 行事曆 -->
   <div class="page" id="page-calendar">
-    <div class="notif-req" id="notifReq" style="display:none">
-      <div class="notif-text">開啟通知權限，行事曆排程將自動提醒您</div>
-      <button class="notif-allow-btn" onclick="requestNotif()">開啟通知</button>
-    </div>
+    <div class="notif-req" id="notifReq" style="display:none"><div class="notif-text">開啟通知，排程將自動提醒您</div><button class="notif-allow-btn" onclick="requestNotif()">開啟通知</button></div>
     <div class="cal-header">
-      <button class="cal-nav" onclick="changeMonth(-1)">&#8249;</button>
+      <button class="cal-nav" onclick="changeMonth(-1)">‹</button>
       <div class="cal-title" id="calTitle"></div>
-      <button class="cal-nav" onclick="changeMonth(1)">&#8250;</button>
+      <button class="cal-nav" onclick="changeMonth(1)">›</button>
     </div>
-    <div class="card" style="padding:10px">
+    <div style="background:var(--s2);border-radius:var(--r);padding:12px;margin-bottom:16px">
       <div class="cal-grid" id="calLabels"></div>
       <div style="height:4px"></div>
       <div class="cal-grid" id="calGrid"></div>
     </div>
-    <div class="card" id="dayCard">
-      <div style="font-size:12px;letter-spacing:0.06em;margin-bottom:10px;color:var(--white2)" id="dayTitle">選擇日期查看排程</div>
-      <div id="dayEvents"><div style="font-size:11px;color:var(--gray4)">點擊日期查看排程</div></div>
-    </div>
-    <div class="card">
-      <div class="card-label">新增排程</div>
-      <div class="form-group">
-        <label class="form-label">標題</label>
-        <input class="form-input" type="text" id="evTitle" placeholder="排程名稱">
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">日期</label>
-          <input class="form-input" type="date" id="evDate">
+    <div class="section"><div class="group"><div style="padding:14px 16px">
+      <div style="font-size:14px;color:var(--w);margin-bottom:12px" id="dayTitle">選擇日期查看排程</div>
+      <div id="dayEvents"><div style="font-size:12px;color:var(--g4)">點擊日期查看排程</div></div>
+    </div></div></div>
+    <div class="section">
+      <div class="section-header">新增排程</div>
+      <div class="group"><div style="padding:16px">
+        <div class="form-group"><label class="form-label">標題</label><input class="form-input" type="text" id="evTitle" placeholder="排程名稱"></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">日期</label><input class="form-input" type="date" id="evDate"></div>
+          <div class="form-group"><label class="form-label">時間</label><input class="form-input" type="time" id="evTime"></div>
         </div>
-        <div class="form-group">
-          <label class="form-label">時間</label>
-          <input class="form-input" type="time" id="evTime">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">對象</label><select class="form-input" id="evWho"><option value="A">帥哥宗彥</option><option value="B">胖胖誓恩</option><option value="both">兩人</option></select></div>
+          <div class="form-group"><label class="form-label">提醒</label><select class="form-input" id="evRemind"><option value="0">不提醒</option><option value="10">10 分前</option><option value="30" selected>30 分前</option><option value="60">1 小時前</option><option value="1440">1 天前</option></select></div>
         </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">對象</label>
-          <select class="form-input" id="evWho">
-            <option value="A">帥哥宗彥</option>
-            <option value="B">胖胖誓恩</option>
-            <option value="both">兩人</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">備註</label>
-          <input class="form-input" type="text" id="evNote" placeholder="選填">
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">提醒（分鐘前）</label>
-        <select class="form-input" id="evRemind">
-          <option value="0">不提醒</option>
-          <option value="10">10 分鐘前</option>
-          <option value="30" selected>30 分鐘前</option>
-          <option value="60">1 小時前</option>
-          <option value="1440">1 天前</option>
-        </select>
-      </div>
-      <button class="add-btn" onclick="addEvent()">新增排程</button>
+        <div class="form-group"><label class="form-label">備註</label><input class="form-input" type="text" id="evNote" placeholder="選填"></div>
+        <button class="add-btn" onclick="addEvent()">新增排程</button>
+      </div></div>
     </div>
   </div>
 
-  <!-- ⑤ 備忘錄 -->
+  <!-- 備忘錄 -->
   <div class="page" id="page-memo">
     <div class="sec-h">備忘錄</div>
-    <div class="card">
-      <div class="card-label">新增備忘</div>
-      <div class="form-group">
-        <label class="form-label">作者</label>
-        <select class="form-input" id="memoWho">
-          <option value="A">帥哥宗彥</option>
-          <option value="B">胖胖誓恩</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <textarea class="memo-textarea" id="memoText" placeholder="輸入備忘內容..."></textarea>
-      </div>
+    <div class="section"><div class="section-header">新增備忘</div><div class="group"><div style="padding:16px">
+      <div class="form-group"><label class="form-label">作者</label><select class="form-input" id="memoWho"><option value="A">帥哥宗彥</option><option value="B">胖胖誓恩</option></select></div>
+      <div class="form-group"><textarea class="memo-textarea" id="memoText" placeholder="輸入備忘內容..."></textarea></div>
       <button class="add-btn" onclick="addMemo()">儲存備忘</button>
-    </div>
-    <div class="card">
-      <div class="card-label">所有備忘</div>
-      <div class="filter-row" style="margin-bottom:10px">
-        <button class="filter-btn active" onclick="filterMemo('all',this)">全部</button>
-        <button class="filter-btn" onclick="filterMemo('A',this)">帥哥宗彥</button>
-        <button class="filter-btn" onclick="filterMemo('B',this)">胖胖誓恩</button>
-      </div>
+    </div></div></div>
+    <div class="section"><div class="section-header">所有備忘</div>
+      <div class="filter-row"><button class="filter-btn active" onclick="filterMemo('all',this)">全部</button><button class="filter-btn" onclick="filterMemo('A',this)">帥哥宗彥</button><button class="filter-btn" onclick="filterMemo('B',this)">胖胖誓恩</button></div>
       <div id="memoList"><div class="empty">尚無備忘</div></div>
     </div>
   </div>
 
-  <!-- ⑥ 報表 -->
+  <!-- 報表 -->
   <div class="page" id="page-report">
     <div class="sec-h">報表</div>
-
-    <!-- 整體統計 -->
     <div class="stat-grid">
       <div class="stat-card"><div class="stat-num" id="sTotal">0</div><div class="stat-lbl">總打卡次數</div></div>
-      <div class="stat-card accent"><div class="stat-num" id="sEarn">$0</div><div class="stat-lbl">跑車總收入</div></div>
-      <div class="stat-card success"><div class="stat-num" id="sTrips">0</div><div class="stat-lbl">跑車趟數</div></div>
+      <div class="stat-card y"><div class="stat-num" id="sEarn">$0</div><div class="stat-lbl">跑車收入</div></div>
+      <div class="stat-card g"><div class="stat-num" id="sTrips">0</div><div class="stat-lbl">跑車趟數</div></div>
       <div class="stat-card"><div class="stat-num" id="sKm">0</div><div class="stat-lbl">總里程 KM</div></div>
     </div>
-
-    <!-- 工時統計 -->
-    <div class="card">
-      <div class="card-label">工時統計</div>
-      <div class="stat-grid" style="margin-bottom:0">
-        <div class="stat-card">
-          <div class="stat-num" id="hoursA">0h</div>
-          <div class="stat-lbl">帥哥宗彥 本月工時</div>
-          <div class="hours-bar"><div class="hours-fill" id="hoursBarA" style="width:0%"></div></div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-num" id="hoursB">0h</div>
-          <div class="stat-lbl">胖胖誓恩 本月工時</div>
-          <div class="hours-bar"><div class="hours-fill" id="hoursBarB" style="width:0%"></div></div>
-        </div>
+    <div class="section"><div class="section-header">工時統計</div><div class="group"><div style="padding:16px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px">
+        <div><div style="font-size:10px;color:var(--g4);text-transform:uppercase;letter-spacing:0.08em">帥哥宗彥</div><div class="stat-num" id="hoursA" style="font-size:24px">0h</div></div>
+        <div style="text-align:right"><div style="font-size:10px;color:var(--g4);text-transform:uppercase;letter-spacing:0.08em">胖胖誓恩</div><div class="stat-num" id="hoursB" style="font-size:24px">0h</div></div>
       </div>
-      <div style="margin-top:10px">
-        <div id="avgHours" style="font-size:10px;color:var(--gray4);letter-spacing:0.06em;line-height:2"></div>
-      </div>
-    </div>
-
-    <!-- 工作項目統計 -->
-    <div class="card">
-      <div class="card-label">工作項目統計 — 帥哥宗彥</div>
+      <div class="hours-bar"><div class="hours-fill" id="hoursBarA" style="width:0%"></div></div>
+      <div style="margin-top:4px"><div class="hours-bar"><div class="hours-fill" id="hoursBarB" style="width:0%;background:var(--g3)"></div></div></div>
+      <div id="avgHours" style="font-size:11px;color:var(--g4);margin-top:12px;line-height:2"></div>
+    </div></div></div>
+    <div class="section"><div class="section-header">工作項目 — 帥哥宗彥</div><div class="group"><div style="padding:16px">
       <div class="bar-chart">
-        <div class="bar-col"><div class="bar-fill" id="bShoot" style="height:2px"></div><div class="bar-lbl">拍攝 <span id="cShoot">0</span></div></div>
-        <div class="bar-col"><div class="bar-fill" id="bEdit" style="height:2px"></div><div class="bar-lbl">剪輯 <span id="cEdit">0</span></div></div>
-        <div class="bar-col"><div class="bar-fill" id="bOther" style="height:2px"></div><div class="bar-lbl">其他 <span id="cOther">0</span></div></div>
+        <div class="bar-col"><div class="bar-fill" id="bShoot"></div><div class="bar-lbl">拍攝 <span id="cShoot">0</span></div></div>
+        <div class="bar-col"><div class="bar-fill" id="bEdit"></div><div class="bar-lbl">剪輯 <span id="cEdit">0</span></div></div>
+        <div class="bar-col"><div class="bar-fill" id="bOther"></div><div class="bar-lbl">其他 <span id="cOther">0</span></div></div>
       </div>
+    </div></div></div>
+    <div class="section"><div class="section-header">跑車統計 — 胖胖誓恩</div>
+      <div class="stat-grid"><div class="stat-card"><div class="stat-num" id="avgEarn">$0</div><div class="stat-lbl">平均每趟收入</div></div><div class="stat-card"><div class="stat-num" id="avgKm">0</div><div class="stat-lbl">平均每趟里程</div></div></div>
     </div>
-
-    <!-- 跑車明細 -->
-    <div class="card">
-      <div class="card-label">胖胖誓恩 — 跑車統計</div>
-      <div class="stat-grid">
-        <div class="stat-card">
-          <div class="stat-num" id="avgEarn">$0</div>
-          <div class="stat-lbl">平均每趟收入</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-num" id="avgKm">0</div>
-          <div class="stat-lbl">平均每趟里程 KM</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 每日統計 -->
-    <div class="card">
-      <div class="card-label">打卡明細</div>
-      <div style="overflow-x:auto">
-        <table class="rtable">
-          <thead><tr><th>日期時間</th><th>員工</th><th>類型</th><th>項目</th><th>金額/里程</th></tr></thead>
-          <tbody id="rBody"><tr><td colspan="5" style="text-align:center;padding:20px;color:var(--gray3)">尚無資料</td></tr></tbody>
-        </table>
-      </div>
-    </div>
-
+    <div class="section"><div class="section-header">打卡明細</div><div class="group" style="overflow-x:auto">
+      <table class="rtable">
+        <thead><tr><th>日期時間</th><th>員工</th><th>類型</th><th>項目</th><th>金額/里程</th></tr></thead>
+        <tbody id="rBody"><tr><td colspan="5" style="text-align:center;padding:20px;color:var(--g3)">尚無資料</td></tr></tbody>
+      </table>
+    </div></div>
     <button class="export-btn" onclick="exportCSV()">匯出 CSV</button>
   </div>
 
-</div><!-- end scroll -->
+</div><!-- scroll end -->
 
-<!-- BOTTOM NAV -->
 <nav class="bottom-nav">
-  <button class="nav-item active" onclick="showPage('checkin',this)">
-    <span class="nav-icon">⏱</span><span class="nav-label">打卡</span>
-  </button>
-  <button class="nav-item" onclick="showPage('records',this)">
-    <span class="nav-icon">≡</span><span class="nav-label">紀錄</span>
-  </button>
-  <button class="nav-item" onclick="showPage('calendar',this)">
-    <span class="nav-icon">◫</span><span class="nav-label">行事曆</span>
-  </button>
-  <button class="nav-item" onclick="showPage('memo',this)">
-    <span class="nav-icon">✎</span><span class="nav-label">備忘錄</span>
-  </button>
-  <button class="nav-item" onclick="showPage('report',this)">
-    <span class="nav-icon">↗</span><span class="nav-label">報表</span>
-  </button>
+  <button class="nav-item active" onclick="showPage('checkin',this)"><span class="nav-icon">⏱</span><span class="nav-label">打卡</span></button>
+  <button class="nav-item" onclick="showPage('records',this)"><span class="nav-icon">≡</span><span class="nav-label">紀錄</span></button>
+  <button class="nav-item" onclick="showPage('calendar',this)"><span class="nav-icon">◫</span><span class="nav-label">行事曆</span></button>
+  <button class="nav-item" onclick="showPage('memo',this)"><span class="nav-icon">✎</span><span class="nav-label">備忘錄</span></button>
+  <button class="nav-item" onclick="showPage('report',this)"><span class="nav-icon">↗</span><span class="nav-label">報表</span></button>
 </nav>
-</div><!-- end app -->
+</div>
 
 <div class="toast" id="toast"></div>
 
-<!-- QR DECODER LIBRARY -->
+<!-- Cheer overlay -->
+<div class="cheer-overlay" id="cheerOverlay">
+  <div class="cheer-emoji" id="cheerEmoji">🎉</div>
+  <div class="cheer-type" id="cheerType">上班打卡</div>
+  <div class="cheer-quote" id="cheerQuote"></div>
+  <div class="cheer-time" id="cheerTime"></div>
+  <button class="cheer-close" onclick="closeCheer()">繼續</button>
+</div>
+
+<!-- Edit modal -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">編輯打卡紀錄</div>
+    <input type="hidden" id="editLogTs">
+    <div class="form-group"><label class="form-label">日期</label><input class="form-input" type="text" id="editDate"></div>
+    <div class="form-group"><label class="form-label">時間</label><input class="form-input" type="time" id="editTime"></div>
+    <div class="form-group"><label class="form-label">工作項目 / 備註</label><input class="form-input" type="text" id="editDetail"></div>
+    <div style="display:flex;gap:10px;margin-top:6px">
+      <button onclick="closeEditModal()" style="flex:1;padding:14px;background:var(--s3);color:var(--g5);border:none;border-radius:var(--r-sm);font-size:14px;font-family:var(--mono);cursor:pointer">取消</button>
+      <button onclick="saveEditLog()" style="flex:1;padding:14px;background:var(--w);color:var(--bg);border:none;border-radius:var(--r-sm);font-size:14px;font-family:var(--mono);cursor:pointer">儲存</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
-
 <script>
-// ────────────────────────────────────────────
-// STORAGE KEY — shared via localStorage
-// For real sync use Firebase/Supabase; here we use
-// localStorage + BroadcastChannel for same-device tab sync
-// ────────────────────────────────────────────
-const STORAGE_KEYS = { logs:'ck_logs', events:'ck_events', memos:'ck_memos', status:'ck_status' };
+const CHEERS_IN=[['🌅','今天也是閃閃發光的一天！'],['☀️','準時到班，職場王者就是你！'],['💪','活力滿滿，今天必定大有作為！'],['🚀','打卡成功，出發！今天無可阻擋。'],['🎯','專注出發，目標就在眼前！'],['🌟','嶄新的一天，充滿無限可能！'],['🔥','燃起來了！今天要創造新紀錄！'],['🌈','每一天都是全新的開始，加油！'],['😎','精神抖擻，今天也要帥氣打拼！'],['✨','閃耀登場，今天屬於你！']];
+const CHEERS_OUT=[['🌙','辛苦了！今天的努力會有回報的。'],['🏆','完美收工，今天的你超棒的！'],['🛋️','好好休息，明天的你更精彩！'],['🌸','感謝今天的自己，認真拼搏了一天！'],['🎊','下班啦！去犒賞一下自己吧！'],['💫','完成！今天的付出都是值得的。'],['🍜','下班快樂！吃頓好的，好好放鬆！'],['🎵','一天辛苦結束，享受美好夜晚！'],['🌃','今天辛苦了，夜晚是你的時光！'],['🥂','幹得漂亮！今天任務完成！']];
 
-function load(key) { try { return JSON.parse(localStorage.getItem(STORAGE_KEYS[key]) || 'null'); } catch(e){ return null; } }
-function save(key, val) {
-  localStorage.setItem(STORAGE_KEYS[key], JSON.stringify(val));
-  // Broadcast to other tabs
-  try { bc.postMessage({ key, val }); } catch(e){}
-}
+const SK={logs:'ck_logs3',events:'ck_events3',memos:'ck_memos3',status:'ck_status3'};
+function load(k){try{return JSON.parse(localStorage.getItem(SK[k])||'null');}catch(e){return null;}}
+function save(k,v){localStorage.setItem(SK[k],JSON.stringify(v));try{bc.postMessage({k,v});}catch(e){}}
 
-// BroadcastChannel for cross-tab sync
 let bc;
-try {
-  bc = new BroadcastChannel('checkin_sync');
-  bc.onmessage = e => { applyRemoteUpdate(e.data.key, e.data.val); };
-} catch(e) { bc = { postMessage:()=>{}, close:()=>{} }; }
+try{bc=new BroadcastChannel('ck_sync3');bc.onmessage=e=>{const{k,v}=e.data;if(k==='logs'){logs=v;updateLogList(curFilter);if(curPage==='report')updateReport();showSyncPulse();}if(k==='events'){events=v;if(curPage==='calendar')renderCalendar();showSyncPulse();}if(k==='memos'){memos=v;if(curPage==='memo')renderMemos(curMemoFilter);showSyncPulse();}if(k==='status'){empStatus=v;updateStatusUI();showSyncPulse();}};}catch(e){bc={postMessage:()=>{}};}
 
-function applyRemoteUpdate(key, val) {
-  if (key === 'logs') { logs = val; updateLogList(currentFilter); updateReport(); showSyncPulse(); }
-  if (key === 'events') { events = val; if (currentPage === 'calendar') renderCalendar(); showSyncPulse(); }
-  if (key === 'memos') { memos = val; renderMemos(currentMemoFilter); showSyncPulse(); }
-  if (key === 'status') { remoteStatus = val; updateStatusUI(); }
+function showSyncPulse(){const d=document.getElementById('syncDot');d.classList.add('live');setTimeout(()=>d.classList.remove('live'),1500);}
+
+let currentEmp='A',selectedTask='';
+let logs=load('logs')||[];
+let events=load('events')||[];
+let memos=load('memos')||[];
+let empStatus=load('status')||{A:'out',B:'out'};
+let calYear,calMonth,selectedDate=null;
+let curFilter='all',curMemoFilter='all',curPage='checkin';
+let deferredPrompt=null;
+let notifGranted='Notification'in window&&Notification.permission==='granted';
+let swipedItem=null,swipeStartX=0;
+
+const today0=new Date();
+calYear=today0.getFullYear();calMonth=today0.getMonth();
+
+function tickClock(){document.getElementById('clock').textContent=new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});}
+tickClock();setInterval(tickClock,1000);
+
+(function(){const ds=today0.toLocaleDateString('zh-TW');['A','B'].forEach(emp=>{const tl=logs.filter(l=>l.emp===emp&&l.date===ds);if(tl.length)empStatus[emp]=tl[tl.length-1].type==='in'?'in':'out';});updateStatusUI();})();
+
+function updateStatusUI(){['A','B'].forEach(emp=>{const el=document.getElementById('status-'+emp.toLowerCase());if(!el)return;el.innerHTML=empStatus[emp]==='in'?`<span class="dot dot-in"></span><span style="color:var(--green)">上班中</span>`:`<span class="dot dot-out"></span>未打卡`;});}
+
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;document.getElementById('installBanner').classList.add('show');});
+document.getElementById('installBtn').addEventListener('click',async()=>{if(!deferredPrompt)return;deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;document.getElementById('installBanner').classList.remove('show');});
+if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').then(r=>window._swReg=r);
+
+function checkNotifPermission(){if('Notification'in window&&Notification.permission==='default')document.getElementById('notifReq').style.display='flex';}
+async function requestNotif(){if(!('Notification'in window)){showToast('不支援通知');return;}const r=await Notification.requestPermission();notifGranted=r==='granted';document.getElementById('notifReq').style.display='none';showToast(r==='granted'?'通知已開啟！':'通知未允許');if(notifGranted)events.forEach(scheduleEventNotif);}
+function scheduleEventNotif(ev){if(!notifGranted||!ev.remind||ev.remind==='0'||!ev.time)return;const[y,m,d]=ev.date.split('-').map(Number);const[hh,mm]=ev.time.split(':').map(Number);const delay=new Date(y,m-1,d,hh,mm).getTime()-parseInt(ev.remind)*60000-Date.now();if(delay<=0)return;if(window._swReg?.active)window._swReg.active.postMessage({type:'SCHEDULE_NOTIF',delay,title:`📅 ${ev.title}`,body:`${ev.time} 排程即將開始`});else setTimeout(()=>new Notification(`📅 ${ev.title}`,{body:`${ev.time} 排程即將開始`,icon:'/icons/icon-192.png'}),delay);}
+
+function showPage(name,btn){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));document.getElementById('page-'+name).classList.add('active');btn.classList.add('active');document.getElementById('mainScroll').scrollTop=0;curPage=name;if(name==='qr')generateQRCodes();if(name==='report')updateReport();if(name==='calendar'){checkNotifPermission();renderCalendar();}if(name==='memo')renderMemos(curMemoFilter);if(name==='records')updateLogList(curFilter);}
+
+function selectEmp(emp){currentEmp=emp;document.querySelectorAll('.emp-card').forEach(c=>c.classList.remove('selected'));document.getElementById('emp-card-'+emp).classList.add('selected');selectedTask='';document.querySelectorAll('.task-pill').forEach(b=>b.classList.remove('active'));const av=document.getElementById('actionAv');av.textContent=emp==='A'?'宗彥':'誓恩';document.getElementById('actionName').textContent=emp==='A'?'帥哥宗彥':'胖胖誓恩';document.getElementById('secA').style.display=emp==='A'?'block':'none';document.getElementById('secB').style.display=emp==='A'?'none':'block';updateCheckinBtn();}
+
+function updateCheckinBtn(){const btn=document.getElementById('checkinBtn');const sub=document.getElementById('actionSub');const isOut=empStatus[currentEmp]==='out';btn.textContent=isOut?'上班打卡':'下班打卡';btn.className='checkin-btn '+(isOut?'btn-in':'btn-out');if(currentEmp==='B'){const ci=empStatus['B']==='in';document.getElementById('bAmtSec').style.display=ci?'block':'none';document.getElementById('bMsg').style.display=ci?'none':'block';if(!ci){['carAmount','kmStart','kmEnd'].forEach(id=>document.getElementById(id).value='');document.getElementById('amtPreview').classList.remove('show');}}if(isOut){sub.textContent='今日未打卡';return;}const last=[...logs].reverse().find(l=>l.emp===currentEmp&&l.type==='in');sub.textContent=last?'上班 '+last.time:'';}
+
+function selectTask(task){selectedTask=selectedTask===task?'':task;document.querySelectorAll('.task-pill').forEach(b=>b.classList.remove('active'));if(selectedTask)document.getElementById('task-'+task).classList.add('active');}
+
+function updateAmtPreview(){const amt=parseInt(document.getElementById('carAmount').value)||0;const s=parseInt(document.getElementById('kmStart').value)||0;const e=parseInt(document.getElementById('kmEnd').value)||0;const km=e>s?e-s:0;document.getElementById('amtVal').textContent='$'+amt.toLocaleString();document.getElementById('kmVal').textContent=km+' KM';const p=document.getElementById('amtPreview');if(amt>0||km>0)p.classList.add('show');else p.classList.remove('show');}
+
+function openCamera(){document.getElementById('cameraInput').click();}
+function handleQRFile(input){if(!input.files||!input.files[0])return;const reader=new FileReader();reader.onload=e=>{const img=new Image();img.onload=()=>{const c=document.createElement('canvas');c.width=img.width;c.height=img.height;const ctx=c.getContext('2d');ctx.drawImage(img,0,0);const d=ctx.getImageData(0,0,img.width,img.height);const code=jsQR(d.data,d.width,d.height);if(code)handleQRResult(code.data);else{showToast('無法辨識 QR Code');showScanOk('無法辨識，請手動打卡');}};img.src=e.target.result;};reader.readAsDataURL(input.files[0]);input.value='';}
+function handleQRResult(data){if(data.startsWith('EMP_A')){selectEmp('A');showScanOk('✓ 識別：帥哥宗彥');}else if(data.startsWith('EMP_B')){selectEmp('B');showScanOk('✓ 識別：胖胖誓恩');}else showScanOk('✓ 掃描成功');showToast('QR Code 掃描成功！');}
+function showScanOk(msg){const el=document.getElementById('scanOk');el.textContent=msg+'　'+new Date().toLocaleTimeString('zh-TW');el.classList.add('show');setTimeout(()=>el.classList.remove('show'),4000);}
+function manualCheckin(){showScanOk('✓ 手動打卡模式');showToast('請確認員工後按打卡鍵');}
+
+function doCheckin(){
+  const now=new Date();
+  const time=now.toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
+  const date=now.toLocaleDateString('zh-TW');
+  const type=empStatus[currentEmp]==='out'?'in':'out';
+  const name=currentEmp==='A'?'帥哥宗彥':'胖胖誓恩';
+  let detail='',amount=0,km=0;
+  if(currentEmp==='A'&&selectedTask)detail=selectedTask;
+  if(currentEmp==='B'&&type==='out'){amount=parseInt(document.getElementById('carAmount').value)||0;const s=parseInt(document.getElementById('kmStart').value)||0;const e=parseInt(document.getElementById('kmEnd').value)||0;km=e>s?e-s:0;const pts=[];if(amount>0)pts.push('$'+amount.toLocaleString());if(km>0)pts.push(km+' km');detail=pts.join(' · ');}
+  let workMins=0;
+  if(type==='out'){const li=[...logs].reverse().find(l=>l.emp===currentEmp&&l.type==='in'&&l.date===date);if(li){const[ih,im]=li.time.split(':').map(Number);const[oh,om]=time.split(':').map(Number);workMins=Math.max(0,(oh*60+om)-(ih*60+im));}}
+  logs.push({emp:currentEmp,name,type,time,date,detail,amount,km,workMins,ts:now.getTime()});
+  save('logs',logs);empStatus[currentEmp]=type==='in'?'in':'out';save('status',empStatus);
+  updateStatusUI();updateCheckinBtn();updateLogList(curFilter);
+  selectedTask='';document.querySelectorAll('.task-pill').forEach(b=>b.classList.remove('active'));
+  showCheer(type,time,workMins);
 }
 
-function showSyncPulse() {
-  const d = document.getElementById('syncDot');
-  d.classList.add('live');
-  setTimeout(() => d.classList.remove('live'), 1500);
+function showCheer(type,time,workMins){
+  const pool=type==='in'?CHEERS_IN:CHEERS_OUT;
+  const[emoji,quote]=pool[Math.floor(Math.random()*pool.length)];
+  document.getElementById('cheerEmoji').textContent=emoji;
+  document.getElementById('cheerType').textContent=type==='in'?'上班打卡':'下班打卡';
+  document.getElementById('cheerQuote').textContent=quote;
+  let tl=time;if(type==='out'&&workMins>0)tl+='　工時 '+Math.floor(workMins/60)+'h '+workMins%60+'m';
+  document.getElementById('cheerTime').textContent=tl;
+  document.getElementById('cheerOverlay').classList.add('show');
+  spawnParticles();
+  setTimeout(closeCheer,4500);
 }
+function closeCheer(){document.getElementById('cheerOverlay').classList.remove('show');}
+function spawnParticles(){const cols=['#f0f0f0','#888','#555','#30d158','#ffd60a','#ff453a'];for(let i=0;i<28;i++){const p=document.createElement('div');p.className='particle';const x=window.innerWidth/2,y=window.innerHeight/2;const a=Math.random()*Math.PI*2;const dist=80+Math.random()*180;p.style.cssText=`left:${x}px;top:${y}px;background:${cols[Math.floor(Math.random()*cols.length)]};--tx:${Math.cos(a)*dist}px;--ty:${Math.sin(a)*dist}px;animation-duration:${0.6+Math.random()*0.5}s;animation-delay:${Math.random()*0.2}s`;document.body.appendChild(p);setTimeout(()=>p.remove(),1100);}}
 
-// ────────────────────────────────────────────
-// STATE
-// ────────────────────────────────────────────
-let currentEmp = 'A';
-let selectedTask = '';
-let logs = load('logs') || [];
-let events = load('events') || [];
-let memos = load('memos') || [];
-let empStatus = { A:'out', B:'out' };
-let remoteStatus = load('status') || { A:'out', B:'out' };
-let calYear, calMonth, selectedDate = null;
-let currentFilter = 'all';
-let currentMemoFilter = 'all';
-let currentPage = 'checkin';
-let deferredPrompt = null;
-let notifGranted = Notification.permission === 'granted';
-
-const today0 = new Date();
-calYear = today0.getFullYear();
-calMonth = today0.getMonth();
-
-// Init clock
-function tickClock() {
-  const n = new Date();
-  document.getElementById('clock').textContent =
-    n.toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
-}
-tickClock(); setInterval(tickClock,1000);
-
-// Restore status from today's logs
-(function restoreStatus() {
-  const todayStr = today0.toLocaleDateString('zh-TW');
-  ['A','B'].forEach(emp => {
-    const todayLogs = logs.filter(l => l.emp===emp && l.date===todayStr);
-    if (todayLogs.length) {
-      empStatus[emp] = todayLogs[todayLogs.length-1].type === 'in' ? 'in' : 'out';
-    }
-  });
-  updateStatusUI();
-})();
-
-function updateStatusUI() {
-  ['A','B'].forEach(emp => {
-    const merged = { ...empStatus };
-    const sEl = document.getElementById('status-' + emp.toLowerCase());
-    if (!sEl) return;
-    if (merged[emp] === 'in') {
-      sEl.innerHTML = `<span class="dot dot-in"></span><span style="color:var(--success)">上班中</span>`;
-    } else {
-      sEl.innerHTML = `<span class="dot dot-out"></span>未打卡`;
-    }
-  });
-}
-
-// ────────────────────────────────────────────
-// PWA
-// ────────────────────────────────────────────
-window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault(); deferredPrompt = e;
-  document.getElementById('installBanner').classList.add('show');
-});
-document.getElementById('installBtn').addEventListener('click', async () => {
-  if (!deferredPrompt) return;
-  deferredPrompt.prompt();
-  await deferredPrompt.userChoice;
-  deferredPrompt = null;
-  document.getElementById('installBanner').classList.remove('show');
-});
-
-// Service worker
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').then(reg => {
-    window._swReg = reg;
-  });
-}
-
-// ────────────────────────────────────────────
-// NOTIFICATIONS
-// ────────────────────────────────────────────
-function checkNotifPermission() {
-  if ('Notification' in window && Notification.permission === 'default') {
-    document.getElementById('notifReq').style.display = 'flex';
-  }
-}
-
-async function requestNotif() {
-  if (!('Notification' in window)) { showToast('此裝置不支援通知'); return; }
-  const r = await Notification.requestPermission();
-  notifGranted = r === 'granted';
-  document.getElementById('notifReq').style.display = 'none';
-  showToast(r === 'granted' ? '通知已開啟！' : '通知未允許');
-  if (notifGranted) scheduleAllEventNotifs();
-}
-
-function scheduleEventNotif(event) {
-  if (!notifGranted || !event.remind || event.remind === '0') return;
-  if (!event.time) return;
-  const [y,m,d] = event.date.split('-').map(Number);
-  const [hh,mm] = event.time.split(':').map(Number);
-  const eventMs = new Date(y, m-1, d, hh, mm).getTime();
-  const notifMs = eventMs - parseInt(event.remind) * 60000;
-  const delay = notifMs - Date.now();
-  if (delay <= 0) return;
-  if (window._swReg) {
-    window._swReg.active && window._swReg.active.postMessage({
-      type: 'SCHEDULE_NOTIF',
-      delay,
-      title: `📅 ${event.title}`,
-      body: `${event.time} 的排程即將開始（${event.remind >= 60 ? event.remind/60+'小時' : event.remind+'分鐘'}前提醒）`
-    });
-  } else {
-    setTimeout(() => {
-      new Notification(`📅 ${event.title}`, {
-        body: `${event.time} 的排程即將開始`,
-        icon: '/icons/icon-192.png'
-      });
-    }, delay);
-  }
-}
-
-function scheduleAllEventNotifs() {
-  events.forEach(scheduleEventNotif);
-}
-
-// ────────────────────────────────────────────
-// NAVIGATION
-// ────────────────────────────────────────────
-function showPage(name, btn) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-  document.getElementById('page-' + name).classList.add('active');
-  btn.classList.add('active');
-  document.getElementById('mainScroll').scrollTop = 0;
-  currentPage = name;
-  if (name === 'qr') generateQRCodes();
-  if (name === 'report') updateReport();
-  if (name === 'calendar') { checkNotifPermission(); renderCalendar(); }
-  if (name === 'memo') renderMemos(currentMemoFilter);
-  if (name === 'records') updateLogList(currentFilter);
-}
-
-// ────────────────────────────────────────────
-// EMPLOYEE
-// ────────────────────────────────────────────
-function selectEmp(emp) {
-  currentEmp = emp;
-  document.querySelectorAll('.emp-card').forEach(c => c.classList.remove('selected'));
-  document.getElementById('emp-card-' + emp).classList.add('selected');
-  selectedTask = '';
-  document.querySelectorAll('.task-btn').forEach(b => b.classList.remove('active'));
-  const isA = emp === 'A';
-  const av = document.getElementById('actionAv');
-  av.className = 'avatar ' + (isA ? 'av-a' : 'av-b');
-  av.textContent = isA ? '宗彥' : '誓恩';
-  document.getElementById('actionName').textContent = isA ? '帥哥宗彥' : '胖胖誓恩';
-  document.getElementById('secA').style.display = isA ? 'block' : 'none';
-  document.getElementById('secB').style.display = isA ? 'none' : 'block';
-  updateCheckinBtn();
-}
-
-function updateCheckinBtn() {
-  const btn = document.getElementById('checkinBtn');
-  const sub = document.getElementById('actionSub');
-  const isOut = empStatus[currentEmp] === 'out';
-  btn.textContent = isOut ? '上班打卡' : '下班打卡';
-  btn.className = 'checkin-btn ' + (isOut ? 'btn-in' : 'btn-out');
-  if (currentEmp === 'B') {
-    const checkedIn = empStatus['B'] === 'in';
-    document.getElementById('bAmtSec').style.display = checkedIn ? 'block' : 'none';
-    document.getElementById('bMsg').style.display = checkedIn ? 'none' : 'block';
-    if (!checkedIn) {
-      document.getElementById('carAmount').value = '';
-      document.getElementById('kmStart').value = '';
-      document.getElementById('kmEnd').value = '';
-      document.getElementById('amtPreview').classList.remove('show');
-    }
-  }
-  if (isOut) { sub.textContent = '今日未打卡'; return; }
-  const last = [...logs].reverse().find(l => l.emp === currentEmp && l.type === 'in');
-  sub.textContent = last ? '上班 ' + last.time : '';
-}
-
-function selectTask(task) {
-  selectedTask = selectedTask === task ? '' : task;
-  document.querySelectorAll('.task-btn').forEach(b => b.classList.remove('active'));
-  if (selectedTask) document.getElementById('task-' + task).classList.add('active');
-}
-
-function updateAmtPreview() {
-  const amt = parseInt(document.getElementById('carAmount').value) || 0;
-  const s = parseInt(document.getElementById('kmStart').value) || 0;
-  const e = parseInt(document.getElementById('kmEnd').value) || 0;
-  const km = e > s ? e - s : 0;
-  document.getElementById('amtVal').textContent = '$' + amt.toLocaleString();
-  document.getElementById('kmVal').textContent = km + ' KM';
-  const p = document.getElementById('amtPreview');
-  if (amt > 0 || km > 0) p.classList.add('show'); else p.classList.remove('show');
-}
-
-// ────────────────────────────────────────────
-// CAMERA / QR SCAN
-// ────────────────────────────────────────────
-function openCamera() {
-  document.getElementById('cameraInput').click();
-}
-
-function handleQRFile(input) {
-  if (!input.files || !input.files[0]) return;
-  const file = input.files[0];
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const img = new Image();
-    img.onload = function() {
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width; canvas.height = img.height;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0);
-      const imageData = ctx.getImageData(0, 0, img.width, img.height);
-      const code = jsQR(imageData.data, imageData.width, imageData.height);
-      if (code) {
-        handleQRResult(code.data);
-      } else {
-        // QR not decoded — treat as manual trigger
-        showToast('無法辨識 QR Code，請手動打卡');
-        showScanOk('無法辨識，請改用手動打卡');
-      }
-    };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
-  input.value = '';
-}
-
-function handleQRResult(data) {
-  // Expected format: EMP_A_帥哥宗彥 or EMP_B_胖胖誓恩
-  if (data.startsWith('EMP_A')) {
-    selectEmp('A');
-    document.getElementById('emp-card-A').classList.add('selected');
-    document.getElementById('emp-card-B').classList.remove('selected');
-    showScanOk('✓ 識別：帥哥宗彥');
-  } else if (data.startsWith('EMP_B')) {
-    selectEmp('B');
-    document.getElementById('emp-card-B').classList.add('selected');
-    document.getElementById('emp-card-A').classList.remove('selected');
-    showScanOk('✓ 識別：胖胖誓恩');
-  } else {
-    showScanOk('✓ 掃描成功：' + data.slice(0,20));
-  }
-  showToast('QR Code 掃描成功！');
-}
-
-function showScanOk(msg) {
-  const el = document.getElementById('scanOk');
-  el.textContent = msg + '　' + new Date().toLocaleTimeString('zh-TW');
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 4000);
-}
-
-function manualCheckin() {
-  showScanOk('✓ 手動打卡模式');
-  showToast('手動打卡，請確認員工後按打卡鍵');
-}
-
-// ────────────────────────────────────────────
-// CHECK-IN
-// ────────────────────────────────────────────
-function doCheckin() {
-  const now = new Date();
-  const time = now.toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
-  const date = now.toLocaleDateString('zh-TW');
-  const type = empStatus[currentEmp] === 'out' ? 'in' : 'out';
-  const name = currentEmp === 'A' ? '帥哥宗彥' : '胖胖誓恩';
-  let detail = '', amount = 0, km = 0;
-  if (currentEmp === 'A' && selectedTask) detail = selectedTask;
-  if (currentEmp === 'B' && type === 'out') {
-    amount = parseInt(document.getElementById('carAmount').value) || 0;
-    const s = parseInt(document.getElementById('kmStart').value) || 0;
-    const e = parseInt(document.getElementById('kmEnd').value) || 0;
-    km = e > s ? e - s : 0;
-    const parts = [];
-    if (amount > 0) parts.push('$' + amount.toLocaleString());
-    if (km > 0) parts.push(km + ' km');
-    detail = parts.join(' · ');
-  }
-  // Calculate work hours for in/out pairs
-  let workMins = 0;
-  if (type === 'out') {
-    const lastIn = [...logs].reverse().find(l => l.emp === currentEmp && l.type === 'in' && l.date === date);
-    if (lastIn) {
-      const [ih,im] = lastIn.time.split(':').map(Number);
-      const [oh,om] = time.split(':').map(Number);
-      workMins = (oh*60+om) - (ih*60+im);
-      if (workMins < 0) workMins = 0;
-    }
-  }
-  const entry = { emp:currentEmp, name, type, time, date, detail, amount, km, workMins, ts:now.getTime() };
-  logs.push(entry);
-  save('logs', logs);
-  empStatus[currentEmp] = type === 'in' ? 'in' : 'out';
-  save('status', empStatus);
-  updateStatusUI();
-  updateCheckinBtn();
-  updateLogList(currentFilter);
-  let msg = (type==='in'?'上班':'下班') + '打卡成功！' + time;
-  if (workMins > 0) msg += `  工時 ${Math.floor(workMins/60)}h${workMins%60}m`;
-  if (amount > 0) msg += '  跑車 $' + amount.toLocaleString();
-  showToast(msg);
-  selectedTask = '';
-  document.querySelectorAll('.task-btn').forEach(b => b.classList.remove('active'));
-}
-
-// ────────────────────────────────────────────
-// LOG LIST
-// ────────────────────────────────────────────
-function updateLogList(filter) {
-  currentFilter = filter;
-  const el = document.getElementById('logList');
-  const filtered = filter==='all' ? logs : logs.filter(l=>l.emp===filter);
-  if (!filtered.length) { el.innerHTML='<div class="empty">尚無打卡紀錄</div>'; return; }
-  el.innerHTML = [...filtered].reverse().map(l => `
-    <div class="log-item">
-      <div class="log-time">${l.date}<br><b>${l.time}</b></div>
-      <div class="avatar ${l.emp==='A'?'av-a':'av-b'}" style="width:26px;height:26px;font-size:8px;flex-shrink:0;">${l.emp==='A'?'宗彥':'誓恩'}</div>
-      <div style="flex:1;min-width:0">
+function updateLogList(filter){
+  curFilter=filter;
+  const el=document.getElementById('logList');
+  const filtered=filter==='all'?logs:logs.filter(l=>l.emp===filter);
+  if(!filtered.length){el.innerHTML='<div class="empty">尚無打卡紀錄</div>';return;}
+  el.innerHTML=[...filtered].reverse().map(l=>`
+    <div class="log-item" id="log-${l.ts}" ontouchstart="swipeStart(event,${l.ts})" ontouchend="swipeEnd(event,${l.ts})">
+      <div class="log-av">${l.emp==='A'?'宗彥':'誓恩'}</div>
+      <div class="log-body">
         <div class="log-name">${l.name}</div>
-        <div class="log-detail">${l.detail||'—'}${l.workMins>0?' · '+Math.floor(l.workMins/60)+'h'+l.workMins%60+'m':''}</div>
+        <div class="log-meta">${l.detail||'—'}${l.workMins>0?' · '+Math.floor(l.workMins/60)+'h'+l.workMins%60+'m':''}</div>
       </div>
-      <div style="text-align:right;flex-shrink:0">
+      <div class="log-right">
+        <div class="log-time-label">${l.date} ${l.time}</div>
         <span class="badge ${l.type==='in'?'badge-in':'badge-out'}">${l.type==='in'?'IN':'OUT'}</span>
-        ${l.amount>0?`<br><span class="money-badge">$${l.amount.toLocaleString()}</span>`:''}
+        ${l.amount>0?`<span class="money-badge">$${l.amount.toLocaleString()}</span>`:''}
+      </div>
+      <div class="log-actions">
+        <button class="log-action-btn log-action-edit" onclick="openEditLog(${l.ts})">編輯</button>
+        <button class="log-action-btn log-action-del" onclick="deleteLog(${l.ts})">刪除</button>
       </div>
     </div>`).join('');
 }
 
-function filterLog(filter, btn) {
-  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  updateLogList(filter);
+function swipeStart(e,ts){swipeStartX=e.touches[0].clientX;}
+function swipeEnd(e,ts){
+  const dx=e.changedTouches[0].clientX-swipeStartX;
+  const item=document.getElementById('log-'+ts);if(!item)return;
+  if(dx<-40){if(swipedItem&&swipedItem!==item)swipedItem.classList.remove('swiped');item.classList.add('swiped');swipedItem=item;}
+  else if(dx>20){item.classList.remove('swiped');if(swipedItem===item)swipedItem=null;}
 }
+document.getElementById('mainScroll').addEventListener('scroll',()=>{if(swipedItem){swipedItem.classList.remove('swiped');swipedItem=null;}});
 
-// ────────────────────────────────────────────
-// QR CODES
-// ────────────────────────────────────────────
-function generateQRCodes() {
-  [['A','#ffffff'],['B','#ffffff']].forEach(([emp,color])=>{
-    const canvas=document.getElementById('qr'+emp);
-    const ctx=canvas.getContext('2d');
-    ctx.fillStyle='#fff'; ctx.fillRect(0,0,200,200);
-    drawQR(ctx,`EMP_${emp}_${emp==='A'?'帥哥宗彥':'胖胖誓恩'}`,200,color,'#111');
-  });
-}
-function drawQR(ctx,data,size,color,bg='#fff'){
-  const m=21,cell=Math.floor(size/m),pat=genPat(data);
-  ctx.fillStyle=bg; ctx.fillRect(0,0,size,size);
-  ctx.fillStyle=color==='#ffffff'?'#111111':color;
-  for(let r=0;r<m;r++) for(let c=0;c<m;c++) if(pat[r][c]) ctx.fillRect(c*cell,r*cell,cell-1,cell-1);
-  [[0,0],[0,14],[14,0]].forEach(([r,c])=>{
-    ctx.strokeStyle=color==='#ffffff'?'#111111':color; ctx.lineWidth=cell;
-    ctx.strokeRect(c*cell+cell/2,r*cell+cell/2,6*cell,6*cell);
-    ctx.fillStyle=color==='#ffffff'?'#111111':color;
-    ctx.fillRect((c+2)*cell,(r+2)*cell,3*cell,3*cell);
-  });
-}
-function genPat(seed){
-  let h=0; for(let i=0;i<seed.length;i++) h=(h*31+seed.charCodeAt(i))&0xffff;
-  return Array.from({length:21},()=>Array.from({length:21},()=>{h=(h*1664525+1013904223)&0xffffffff;return(h&1)===1;}));
-}
+function filterLog(filter,btn){document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');updateLogList(filter);}
 
-// ────────────────────────────────────────────
-// CALENDAR
-// ────────────────────────────────────────────
+function openEditLog(ts){
+  const log=logs.find(l=>l.ts===ts);if(!log)return;
+  if(swipedItem){swipedItem.classList.remove('swiped');swipedItem=null;}
+  document.getElementById('editLogTs').value=ts;
+  document.getElementById('editDate').value=log.date;
+  document.getElementById('editTime').value=log.time;
+  document.getElementById('editDetail').value=log.detail||'';
+  document.getElementById('editModal').classList.add('show');
+}
+function closeEditModal(){document.getElementById('editModal').classList.remove('show');}
+function saveEditLog(){
+  const ts=parseInt(document.getElementById('editLogTs').value);
+  const idx=logs.findIndex(l=>l.ts===ts);if(idx<0)return;
+  logs[idx].date=document.getElementById('editDate').value;
+  logs[idx].time=document.getElementById('editTime').value;
+  logs[idx].detail=document.getElementById('editDetail').value;
+  save('logs',logs);updateLogList(curFilter);closeEditModal();showToast('紀錄已更新！');
+}
+function deleteLog(ts){logs=logs.filter(l=>l.ts!==ts);save('logs',logs);updateLogList(curFilter);showToast('紀錄已刪除');swipedItem=null;}
+
+function generateQRCodes(){[['A'],['B']].forEach(([emp])=>{const canvas=document.getElementById('qr'+emp);const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,180,180);drawQR(ctx,`EMP_${emp}_${emp==='A'?'帥哥宗彥':'胖胖誓恩'}`,180,'#111111');});}
+function drawQR(ctx,data,size,color){const m=21,cell=Math.floor(size/m),pat=genPat(data);ctx.fillStyle=color;for(let r=0;r<m;r++)for(let c=0;c<m;c++)if(pat[r][c])ctx.fillRect(c*cell,r*cell,cell-1,cell-1);[[0,0],[0,14],[14,0]].forEach(([r,c])=>{ctx.strokeStyle=color;ctx.lineWidth=cell;ctx.strokeRect(c*cell+cell/2,r*cell+cell/2,6*cell,6*cell);ctx.fillStyle=color;ctx.fillRect((c+2)*cell,(r+2)*cell,3*cell,3*cell);});}
+function genPat(seed){let h=0;for(let i=0;i<seed.length;i++)h=(h*31+seed.charCodeAt(i))&0xffff;return Array.from({length:21},()=>Array.from({length:21},()=>{h=(h*1664525+1013904223)&0xffffffff;return(h&1)===1;}));}
+
 function renderCalendar(){
   document.getElementById('calTitle').textContent=calYear+' · '+(calMonth+1);
-  const labels=document.getElementById('calLabels');
-  labels.innerHTML=['SUN','MON','TUE','WED','THU','FRI','SAT'].map(d=>`<div class="cal-day-label">${d}</div>`).join('');
+  document.getElementById('calLabels').innerHTML=['S','M','T','W','T','F','S'].map(d=>`<div class="cal-day-label">${d}</div>`).join('');
   const grid=document.getElementById('calGrid');
-  const first=new Date(calYear,calMonth,1).getDay();
-  const total=new Date(calYear,calMonth+1,0).getDate();
-  const prevTotal=new Date(calYear,calMonth,0).getDate();
-  const today=new Date();
+  const first=new Date(calYear,calMonth,1).getDay();const total=new Date(calYear,calMonth+1,0).getDate();const prevTotal=new Date(calYear,calMonth,0).getDate();const today=new Date();
   let html='';
-  for(let i=0;i<first;i++) html+=`<div class="cal-day other-month"><div class="cal-num">${prevTotal-first+1+i}</div></div>`;
-  for(let d=1;d<=total;d++){
-    const dk=calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-    const evs=events.filter(e=>e.date===dk);
-    const isToday=today.getFullYear()===calYear&&today.getMonth()===calMonth&&today.getDate()===d;
-    const isSel=selectedDate===dk;
-    let cls='cal-day';
-    if(isToday) cls+=' today';
-    if(evs.length) cls+=' has-event';
-    if(isSel) cls+=' selected';
-    const wc={A:'#ffffff',B:'#888888',both:'#ffcc00'};
-    const dots=evs.map(e=>`<span class="cal-dot" style="background:${wc[e.who]||'#888'}"></span>`).join('');
-    html+=`<div class="${cls}" onclick="selectCalDay('${dk}')"><div class="cal-num">${d}</div><div class="cal-dots">${dots}</div></div>`;
-  }
-  const rem=42-first-total;
-  for(let d=1;d<=rem;d++) html+=`<div class="cal-day other-month"><div class="cal-num">${d}</div></div>`;
-  grid.innerHTML=html;
-  if(selectedDate) showDayEvents(selectedDate);
+  for(let i=0;i<first;i++)html+=`<div class="cal-day other-month"><div class="cal-num">${prevTotal-first+1+i}</div></div>`;
+  for(let d=1;d<=total;d++){const dk=calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');const evs=events.filter(e=>e.date===dk);const isToday=today.getFullYear()===calYear&&today.getMonth()===calMonth&&today.getDate()===d;const isSel=selectedDate===dk;let cls='cal-day';if(isToday)cls+=' today';if(evs.length)cls+=' has-event';if(isSel)cls+=' selected';const wc={A:'#f0f0f0',B:'#666',both:'#ffd60a'};const dots=evs.map(e=>`<span class="cal-dot" style="background:${wc[e.who]||'#888'}"></span>`).join('');html+=`<div class="${cls}" onclick="selectCalDay('${dk}')"><div class="cal-num">${d}</div><div class="cal-dots">${dots}</div></div>`;}
+  for(let d=1;d<=42-first-total;d++)html+=`<div class="cal-day other-month"><div class="cal-num">${d}</div></div>`;
+  grid.innerHTML=html;if(selectedDate)showDayEvents(selectedDate);
 }
+function selectCalDay(dk){selectedDate=dk;renderCalendar();showDayEvents(dk);}
+function showDayEvents(dk){const p=dk.split('-');document.getElementById('dayTitle').textContent=parseInt(p[1])+'月'+parseInt(p[2])+'日';const evs=events.filter(e=>e.date===dk);const el=document.getElementById('dayEvents');if(!evs.length){el.innerHTML='<div style="font-size:12px;color:var(--g4)">當日無排程</div>';return;}const wl={A:'帥哥宗彥',B:'胖胖誓恩',both:'兩人'};const wc={A:'#f0f0f0',B:'#888',both:'#ffd60a'};el.innerHTML=evs.map((e,i)=>`<div class="event-item"><div class="event-dot" style="background:${wc[e.who]}"></div><div style="flex:1"><div style="font-size:14px;color:var(--w)">${e.title}</div><div style="font-size:11px;color:var(--g4);margin-top:3px">${e.time?e.time+' · ':''}${e.note||''}</div><div style="font-size:10px;color:${wc[e.who]};margin-top:3px;text-transform:uppercase;letter-spacing:0.06em">${wl[e.who]}${e.remind&&e.remind!=='0'?' · ⏰ '+e.remind+'分前':''}</div></div><button class="event-del" onclick="deleteEvent('${dk}',${i})">×</button></div>`).join('');}
+function deleteEvent(dk,i){const all=events.reduce((a,e,j)=>{if(e.date===dk)a.push(j);return a;},[]);events.splice(all[i],1);save('events',events);renderCalendar();showDayEvents(dk);showToast('排程已刪除');}
+function changeMonth(dir){calMonth+=dir;if(calMonth>11){calMonth=0;calYear++;}if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
+function addEvent(){const title=document.getElementById('evTitle').value.trim();const date=document.getElementById('evDate').value;if(!title||!date){showToast('請填寫標題與日期');return;}const ev={title,date,time:document.getElementById('evTime').value,who:document.getElementById('evWho').value,note:document.getElementById('evNote').value.trim(),remind:document.getElementById('evRemind').value};events.push(ev);save('events',events);document.getElementById('evTitle').value='';document.getElementById('evNote').value='';scheduleEventNotif(ev);showToast('排程已新增！');selectedDate=date;renderCalendar();}
 
-function selectCalDay(dk){ selectedDate=dk; renderCalendar(); showDayEvents(dk); }
-
-function showDayEvents(dk){
-  const parts=dk.split('-');
-  document.getElementById('dayTitle').textContent=parseInt(parts[1])+'月'+parseInt(parts[2])+'日';
-  const evs=events.filter(e=>e.date===dk);
-  const el=document.getElementById('dayEvents');
-  if(!evs.length){ el.innerHTML='<div style="font-size:11px;color:var(--gray4)">當日無排程</div>'; return; }
-  const wl={A:'帥哥宗彥',B:'胖胖誓恩',both:'兩人'};
-  const wc={A:'#ffffff',B:'#888888',both:'#ffcc00'};
-  el.innerHTML=evs.map((e,i)=>`
-    <div class="event-item">
-      <div class="event-dot" style="background:${wc[e.who]}"></div>
-      <div style="flex:1">
-        <div style="font-size:13px;letter-spacing:0.04em;color:var(--white2)">${e.title}</div>
-        <div style="font-size:10px;color:var(--gray4);letter-spacing:0.04em;margin-top:2px">${e.time?e.time+' · ':''}${e.note||''}</div>
-        <div style="font-size:9px;color:${wc[e.who]};margin-top:3px;letter-spacing:0.08em;text-transform:uppercase">${wl[e.who]}${e.remind&&e.remind!=='0'?' · ⏰ '+e.remind+'分鐘前提醒':''}</div>
-      </div>
-      <button class="event-del" onclick="deleteEvent('${dk}',${i})">×</button>
-    </div>`).join('');
-}
-
-function deleteEvent(dk,i){
-  const idxAll=events.reduce((arr,e,j)=>{ if(e.date===dk) arr.push(j); return arr; },[]);
-  events.splice(idxAll[i],1);
-  save('events',events);
-  renderCalendar(); showDayEvents(dk); showToast('排程已刪除');
-}
-
-function changeMonth(dir){
-  calMonth+=dir;
-  if(calMonth>11){calMonth=0;calYear++;}
-  if(calMonth<0){calMonth=11;calYear--;}
-  renderCalendar();
-}
-
-function addEvent(){
-  const title=document.getElementById('evTitle').value.trim();
-  const date=document.getElementById('evDate').value;
-  const time=document.getElementById('evTime').value;
-  const who=document.getElementById('evWho').value;
-  const note=document.getElementById('evNote').value.trim();
-  const remind=document.getElementById('evRemind').value;
-  if(!title||!date){ showToast('請填寫標題與日期'); return; }
-  const ev={title,date,time,who,note,remind};
-  events.push(ev);
-  save('events',events);
-  document.getElementById('evTitle').value='';
-  document.getElementById('evNote').value='';
-  scheduleEventNotif(ev);
-  showToast('排程已新增！');
-  selectedDate=date; renderCalendar();
-}
-
-// ────────────────────────────────────────────
-// MEMO
-// ────────────────────────────────────────────
-function addMemo(){
-  const text=document.getElementById('memoText').value.trim();
-  const who=document.getElementById('memoWho').value;
-  if(!text){ showToast('請輸入備忘內容'); return; }
-  const now=new Date();
-  memos.unshift({
-    who, text,
-    date:now.toLocaleDateString('zh-TW'),
-    time:now.toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'}),
-    id:now.getTime()
-  });
-  save('memos',memos);
-  document.getElementById('memoText').value='';
-  renderMemos(currentMemoFilter);
-  showToast('備忘已儲存！');
-}
-
-function renderMemos(filter){
-  currentMemoFilter=filter;
-  const el=document.getElementById('memoList');
-  const filtered=filter==='all'?memos:memos.filter(m=>m.who===filter);
-  if(!filtered.length){ el.innerHTML='<div class="empty">尚無備忘</div>'; return; }
-  const wn={A:'帥哥宗彥',B:'胖胖誓恩'};
-  el.innerHTML=filtered.map(m=>`
-    <div class="memo-item">
-      <div class="memo-item-header">
-        <div>
-          <div class="memo-who">${wn[m.who]}</div>
-        </div>
-        <div class="memo-date">${m.date} ${m.time}</div>
-      </div>
-      <div class="memo-text">${m.text.replace(/\n/g,'<br>')}</div>
-      <button class="memo-del" onclick="deleteMemo(${m.id})">×</button>
-    </div>`).join('');
-}
-
-function deleteMemo(id){
-  memos=memos.filter(m=>m.id!==id);
-  save('memos',memos);
-  renderMemos(currentMemoFilter);
-  showToast('備忘已刪除');
-}
-
-function filterMemo(filter,btn){
-  document.querySelectorAll('#page-memo .filter-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  renderMemos(filter);
-}
-
-// ────────────────────────────────────────────
-// REPORT
-// ────────────────────────────────────────────
-function calcWorkHours(emp){
-  const todayLogs=logs.filter(l=>l.emp===emp);
-  const totalMins=todayLogs.filter(l=>l.type==='out'&&l.workMins).reduce((s,l)=>s+l.workMins,0);
-  return totalMins;
-}
+function addMemo(){const text=document.getElementById('memoText').value.trim();if(!text){showToast('請輸入備忘內容');return;}const now=new Date();memos.unshift({who:document.getElementById('memoWho').value,text,date:now.toLocaleDateString('zh-TW'),time:now.toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'}),id:now.getTime()});save('memos',memos);document.getElementById('memoText').value='';renderMemos(curMemoFilter);showToast('備忘已儲存！');}
+function renderMemos(filter){curMemoFilter=filter;const el=document.getElementById('memoList');const filtered=filter==='all'?memos:memos.filter(m=>m.who===filter);if(!filtered.length){el.innerHTML='<div class="empty">尚無備忘</div>';return;}const wn={A:'帥哥宗彥',B:'胖胖誓恩'};el.innerHTML=filtered.map(m=>`<div class="memo-item"><div style="display:flex;justify-content:space-between"><div class="memo-who">${wn[m.who]}</div><div class="memo-date">${m.date} ${m.time}</div></div><div class="memo-text">${m.text.replace(/\n/g,'<br>')}</div><button class="memo-del" onclick="deleteMemo(${m.id})">×</button></div>`).join('');}
+function deleteMemo(id){memos=memos.filter(m=>m.id!==id);save('memos',memos);renderMemos(curMemoFilter);showToast('備忘已刪除');}
+function filterMemo(filter,btn){document.querySelectorAll('#page-memo .filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderMemos(filter);}
 
 function updateReport(){
   document.getElementById('sTotal').textContent=logs.length;
-  const bLogs=logs.filter(l=>l.emp==='B');
-  const earnLogs=bLogs.filter(l=>l.amount>0);
-  const totalEarn=earnLogs.reduce((s,l)=>s+l.amount,0);
-  const trips=earnLogs.length;
-  const totalKm=bLogs.reduce((s,l)=>s+(l.km||0),0);
+  const bLogs=logs.filter(l=>l.emp==='B');const eLogs=bLogs.filter(l=>l.amount>0);
+  const totalEarn=eLogs.reduce((s,l)=>s+l.amount,0);const trips=eLogs.length;const totalKm=bLogs.reduce((s,l)=>s+(l.km||0),0);
   document.getElementById('sEarn').textContent='$'+totalEarn.toLocaleString();
-  document.getElementById('sTrips').textContent=trips;
-  document.getElementById('sKm').textContent=totalKm;
+  document.getElementById('sTrips').textContent=trips;document.getElementById('sKm').textContent=totalKm;
   document.getElementById('avgEarn').textContent=trips>0?'$'+Math.round(totalEarn/trips).toLocaleString():'$0';
   document.getElementById('avgKm').textContent=trips>0?Math.round(totalKm/trips):0;
-
-  // Work hours
-  const minsA=calcWorkHours('A'), minsB=calcWorkHours('B');
-  const hA=Math.floor(minsA/60), mA=minsA%60;
-  const hB=Math.floor(minsB/60), mB=minsB%60;
-  document.getElementById('hoursA').textContent=hA+'h'+(mA>0?mA+'m':'');
-  document.getElementById('hoursB').textContent=hB+'h'+(mB>0?mB+'m':'');
-  const maxMins=Math.max(minsA,minsB,1);
-  document.getElementById('hoursBarA').style.width=Math.round(minsA/maxMins*100)+'%';
-  document.getElementById('hoursBarB').style.width=Math.round(minsB/maxMins*100)+'%';
-
-  const checkinCountA=logs.filter(l=>l.emp==='A'&&l.type==='in').length;
-  const checkinCountB=logs.filter(l=>l.emp==='B'&&l.type==='in').length;
-  const avgA=checkinCountA>0?Math.round(minsA/checkinCountA):0;
-  const avgB=checkinCountB>0?Math.round(minsB/checkinCountB):0;
-  document.getElementById('avgHours').innerHTML=
-    `帥哥宗彥 平均工時：${Math.floor(avgA/60)}h${avgA%60}m／天<br>胖胖誓恩 平均工時：${Math.floor(avgB/60)}h${avgB%60}m／天`;
-
-  // Task stats
-  document.getElementById('sTotal').textContent=logs.length;
-  document.getElementById('sA').style && (document.getElementById('sA') ? document.getElementById('sA').textContent=logs.filter(l=>l.emp==='A').length : null);
+  const mA=logs.filter(l=>l.emp==='A'&&l.type==='out').reduce((s,l)=>s+(l.workMins||0),0);
+  const mB=logs.filter(l=>l.emp==='B'&&l.type==='out').reduce((s,l)=>s+(l.workMins||0),0);
+  document.getElementById('hoursA').textContent=Math.floor(mA/60)+'h'+(mA%60?mA%60+'m':'');
+  document.getElementById('hoursB').textContent=Math.floor(mB/60)+'h'+(mB%60?mB%60+'m':'');
+  const maxM=Math.max(mA,mB,1);
+  document.getElementById('hoursBarA').style.width=Math.round(mA/maxM*100)+'%';
+  document.getElementById('hoursBarB').style.width=Math.round(mB/maxM*100)+'%';
+  const cA=logs.filter(l=>l.emp==='A'&&l.type==='in').length;const cB=logs.filter(l=>l.emp==='B'&&l.type==='in').length;
+  const avgA=cA>0?Math.round(mA/cA):0,avgB=cB>0?Math.round(mB/cB):0;
+  document.getElementById('avgHours').innerHTML=`帥哥宗彥 平均 ${Math.floor(avgA/60)}h${avgA%60}m／天<br>胖胖誓恩 平均 ${Math.floor(avgB/60)}h${avgB%60}m／天`;
   const tc={'拍攝':0,'剪輯':0,'其他':0};
   logs.filter(l=>l.emp==='A'&&l.detail&&tc[l.detail]!==undefined).forEach(l=>tc[l.detail]++);
-  document.getElementById('cShoot').textContent=tc['拍攝'];
-  document.getElementById('cEdit').textContent=tc['剪輯'];
-  document.getElementById('cOther').textContent=tc['其他'];
+  document.getElementById('cShoot').textContent=tc['拍攝'];document.getElementById('cEdit').textContent=tc['剪輯'];document.getElementById('cOther').textContent=tc['其他'];
   const maxT=Math.max(...Object.values(tc),1);
-  document.getElementById('bShoot').style.height=Math.round(tc['拍攝']/maxT*52)+'px';
-  document.getElementById('bEdit').style.height=Math.round(tc['剪輯']/maxT*52)+'px';
-  document.getElementById('bOther').style.height=Math.round(tc['其他']/maxT*52)+'px';
-
-  // Table
+  document.getElementById('bShoot').style.height=Math.round(tc['拍攝']/maxT*52)+'px';document.getElementById('bEdit').style.height=Math.round(tc['剪輯']/maxT*52)+'px';document.getElementById('bOther').style.height=Math.round(tc['其他']/maxT*52)+'px';
   const tb=document.getElementById('rBody');
-  if(!logs.length){ tb.innerHTML='<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--gray3)">尚無資料</td></tr>'; return; }
-  tb.innerHTML=[...logs].reverse().map(l=>`
-    <tr>
-      <td>${l.date}<br>${l.time}</td>
-      <td>${l.name}</td>
-      <td><span class="badge ${l.type==='in'?'badge-in':'badge-out'}" style="font-size:8px">${l.type==='in'?'IN':'OUT'}</span></td>
-      <td>${l.detail||'—'}</td>
-      <td>${l.amount>0?'$'+l.amount.toLocaleString():'—'}${l.km>0?' / '+l.km+'km':''}</td>
-    </tr>`).join('');
+  if(!logs.length){tb.innerHTML='<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--g3)">尚無資料</td></tr>';return;}
+  tb.innerHTML=[...logs].reverse().map(l=>`<tr><td>${l.date}<br>${l.time}</td><td style="font-size:11px">${l.name}</td><td><span class="badge ${l.type==='in'?'badge-in':'badge-out'}" style="font-size:9px">${l.type==='in'?'IN':'OUT'}</span></td><td>${l.detail||'—'}</td><td>${l.amount>0?'$'+l.amount.toLocaleString():'—'}${l.km>0?' / '+l.km+'km':''}</td></tr>`).join('');
 }
+function exportCSV(){if(!logs.length){showToast('尚無資料可匯出');return;}const rows=[['日期','時間','員工','打卡類型','工作項目','跑車金額','里程km','工時min']];logs.forEach(l=>rows.push([l.date,l.time,l.name,l.type==='in'?'上班':'下班',l.detail||'',l.amount||'',l.km||'',l.workMins||'']));const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\uFEFF'+rows.map(r=>r.join(',')).join('\n')],{type:'text/csv;charset=utf-8;'}));a.download='打卡紀錄_'+new Date().toLocaleDateString('zh-TW').replace(/\//g,'-')+'.csv';a.click();showToast('CSV 匯出成功！');}
 
-function exportCSV(){
-  if(!logs.length){ showToast('尚無資料可匯出'); return; }
-  const rows=[['日期','時間','員工','打卡類型','工作項目','跑車金額','里程km','工時min']];
-  logs.forEach(l=>rows.push([l.date,l.time,l.name,l.type==='in'?'上班':'下班',l.detail||'',l.amount||'',l.km||'',l.workMins||'']));
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob(['\uFEFF'+rows.map(r=>r.join(',')).join('\n')],{type:'text/csv;charset=utf-8;'}));
-  a.download='打卡紀錄_'+new Date().toLocaleDateString('zh-TW').replace(/\//g,'-')+'.csv';
-  a.click(); showToast('CSV 匯出成功！');
-}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600);}
 
-// ────────────────────────────────────────────
-// TOAST
-// ────────────────────────────────────────────
-function showToast(msg){
-  const t=document.getElementById('toast');
-  t.textContent=msg; t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2800);
-}
-
-// ────────────────────────────────────────────
-// INIT
-// ────────────────────────────────────────────
+// Init
 selectEmp('A');
-const todayStr=today0.getFullYear()+'-'+String(today0.getMonth()+1).padStart(2,'0')+'-'+String(today0.getDate()).padStart(2,'0');
-document.getElementById('evDate').value=todayStr;
+document.getElementById('evDate').value=today0.getFullYear()+'-'+String(today0.getMonth()+1).padStart(2,'0')+'-'+String(today0.getDate()).padStart(2,'0');
 updateLogList('all');
-
-if(notifGranted) scheduleAllEventNotifs();
+if(notifGranted)events.forEach(scheduleEventNotif);
 </script>
 </body>
 </html>
