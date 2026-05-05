@@ -1025,23 +1025,24 @@ function showDayEvents(dk){
   const wl={A:'Yen 🐸',B:'4N 🐵',both:'兩人'};
   const cmap={white:'#f0f0f0',blue:'#4a9eff',green:'#30d158',yellow:'#ffd60a',red:'#ff453a',purple:'#bf5af2'};
   const wcol={A:'#f0f0f0',B:'#30d158',both:'#ffd60a'};
-  function rl(r){if(!r||r==='0')return'';const m=parseInt(r);if(m<60)return m+'分鐘前';if(m<1440)return(m/60)+'小時前';const d=m/1440;return d===1?'1天前':d+'天前';}
+  const rl=r=>{if(!r||r==='0')return'';const m=parseInt(r);if(m<60)return m+'分鐘前';if(m<1440)return(m/60)+'小時前';const d=m/1440;return d===1?'1天前':d+'天前';};
   el.innerHTML=evs.map((e,i)=>{
     const c=e.color&&e.color!=='white'?cmap[e.color]:wcol[e.who]||'#f0f0f0';
     const ts=e.time?(e.endDate?e.date+' '+e.time+' → '+e.endDate+(e.endTime?' '+e.endTime:''):e.time):'';
+    const remind=e.remind&&e.remind!=='0'?'<span style="color:var(--g3)">⏰ '+rl(e.remind)+'</span>':'';
     return '<div class="event-item">'
-      +'<div class="event-dot" style="background:'+c+';width:10px;height:10px;border-radius:50%;margin-top:3px;flex-shrink:0"></div>'
-      +'<div style="flex:1">'
+      +'<div style="width:10px;height:10px;border-radius:50%;background:'+c+';margin-top:3px;flex-shrink:0"></div>'
+      +'<div style="flex:1;min-width:0;padding-left:10px">'
       +'<div style="font-size:14px;color:var(--w);font-weight:500">'+e.title+'</div>'
-      +'<div style="font-size:11px;color:var(--g4);margin-top:3px">'+ts+(e.note?' · '+e.note:'')+'</div>'
+      +(ts||e.note?'<div style="font-size:11px;color:var(--g4);margin-top:3px">'+(ts||'')+(e.note?' · '+e.note:'')+'</div>':'')
       +'<div style="font-size:10px;margin-top:4px;display:flex;gap:8px">'
-      +'<span style="color:'+c+'">'+wl[e.who]+'</span>'
-      +(e.remind&&e.remind!=='0'?'<span style="color:var(--g3)">⏰ '+rl(e.remind)+'</span>':'')
+      +'<span style="color:'+c+'">'+wl[e.who]+'</span>'+remind
       +'</div></div>'
-      +'<button class="event-del" onclick="deleteEvent(''+dk+'','+i+')">×</button>'
+      +'<button class="event-del" onclick="deleteEvent(\''+dk+'\','+i+')">×</button>'
       +'</div>';
   }).join('');
 }
+
 function deleteEvent(dk,i){
   const all=events.reduce((a,e,j)=>{if(e.date===dk)a.push(j);return a;},[]);
   const ev=events[all[i]];
