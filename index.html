@@ -290,6 +290,11 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--mono
 .particle{position:fixed;width:7px;height:7px;border-radius:50%;pointer-events:none;z-index:601;animation:pFly 0.9s ease-out forwards}
 @keyframes pFly{0%{transform:translate(0,0) scale(1);opacity:1}100%{transform:translate(var(--tx),var(--ty)) scale(0);opacity:0}}
 
+/* 補登 modal */
+.backfill-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:500;display:none;align-items:flex-end;justify-content:center}
+.backfill-modal-overlay.show{display:flex}
+.backfill-sheet{background:var(--s2);border-radius:var(--r) var(--r) 0 0;padding:20px 20px calc(20px + var(--safe-b));width:100%;max-width:480px;animation:slideUp 0.3s cubic-bezier(0.32,0.72,0,1);max-height:90vh;overflow-y:auto}
+
 /* Edit modal */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:500;display:none;align-items:flex-end;justify-content:center}
 .modal-overlay.show{display:flex}
@@ -301,6 +306,93 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--mono
 .sec-h{font-family:var(--disp);font-size:26px;letter-spacing:0.08em;margin-bottom:20px}
 .empty{text-align:center;padding:40px 16px;color:var(--g3);font-size:13px}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const _SB_URL = 'https://zoabvuslsztfyhhllfvo.supabase.co';
+const _SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpvYWJ2dXNsc3RmeWhobGxmdm8iLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjQzMjgwNSwiZXhwIjoyMDYyMDA4ODA1fQ.Zc3aMWGrOelklOejHw7DSbp_UrWbzNsmNP6iYjS72NE';
+const _sb = supabase.createClient(_SB_URL, _SB_KEY);
+
+// ── Supabase helpers ──────────────────────────────────────────────
+async function sbFetch(table) {
+  const { data, error } = await _sb.from(table).select('*').order('created_at', { ascending: true });
+  if (error) { console.error('fetch', table, error); return []; }
+  return data || [];
+}
+async function sbInsert(table, row) {
+  const { error } = await _sb.from(table).insert([row]);
+  if (error) console.error('insert', table, error);
+}
+async function sbDelete(table, col, val) {
+  const { error } = await _sb.from(table).delete().eq(col, val);
+  if (error) console.error('delete', table, error);
+}
+async function sbUpdate(table, col, val, row) {
+  const { error } = await _sb.from(table).update(row).eq(col, val);
+  if (error) console.error('update', table, error);
+}
+
+// ── Real-time subscriptions ───────────────────────────────────────
+function setupRealtime() {
+  _sb.channel('db-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'logs' }, () => {
+      loadLogs();
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, () => {
+      loadEvents();
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'memos' }, () => {
+      loadMemos();
+    })
+    .subscribe();
+}
+
+// ── Load from Supabase ────────────────────────────────────────────
+async function loadLogs() {
+  const rows = await sbFetch('logs');
+  logs = rows.map(r => ({
+    emp: r.emp, name: r.name, type: r.type, time: r.time, date: r.date,
+    detail: r.detail||'', amount: r.amount||0, km: r.km||0,
+    workMins: r.work_mins||0, ts: r.ts, _id: r.id
+  }));
+  // Restore today's status
+  const ds = new Date().toLocaleDateString('zh-TW');
+  ['A','B'].forEach(emp => {
+    const tl = logs.filter(l => l.emp===emp && l.date===ds);
+    if (tl.length) empStatus[emp] = tl[tl.length-1].type==='in' ? 'in' : 'out';
+    else empStatus[emp] = 'out';
+  });
+  updateStatusUI();
+  updateCheckinBtn();
+  updateLogList(curFilter);
+  if (curPage==='report') updateReport();
+  showSyncPulse();
+}
+
+async function loadEvents() {
+  const rows = await sbFetch('events');
+  events = rows.map(r => ({
+    title: r.title, date: r.date, time: r.time,
+    who: r.who, note: r.note||'', remind: r.remind||'0', _id: r.id
+  }));
+  if (curPage==='calendar') renderCalendar();
+  showSyncPulse();
+}
+
+async function loadMemos() {
+  const rows = await sbFetch('memos');
+  memos = rows.map(r => ({
+    who: r.who, text: r.text, date: r.date, time: r.time,
+    id: r.memo_id, _id: r.id
+  })).reverse();
+  if (curPage==='memo') renderMemos(curMemoFilter);
+  showSyncPulse();
+}
+
+async function initData() {
+  await Promise.all([loadLogs(), loadEvents(), loadMemos()]);
+  setupRealtime();
+}
+</script>
 </head>
 <body>
 <div class="app">
@@ -426,7 +518,10 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--mono
 
   <!-- 打卡紀錄 -->
   <div class="page" id="page-records">
-    <div class="sec-h">打卡紀錄</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+  <div class="sec-h" style="margin-bottom:0">打卡紀錄</div>
+  <button onclick="openBackfill()" style="background:var(--s2);border:1px solid var(--g1);border-radius:var(--r-sm);padding:8px 14px;color:var(--g5);font-size:12px;font-family:var(--mono);cursor:pointer;letter-spacing:0.04em">＋ 補登</button>
+</div>
     <div class="filter-row">
       <button class="filter-btn active" onclick="filterLog('all',this)">全部</button>
       <button class="filter-btn" onclick="filterLog('A',this)">Yen</button>
@@ -563,6 +658,60 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--mono
   <button class="cheer-close" onclick="closeCheer()">繼續</button>
 </div>
 
+<!-- 補登 modal -->
+<div class="backfill-modal-overlay" id="backfillModal">
+  <div class="backfill-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">補登打卡紀錄</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">員工</label>
+        <select class="form-input" id="bfEmp">
+          <option value="A">Yen 🐸</option>
+          <option value="B">4N 🐵</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">類型</label>
+        <select class="form-input" id="bfType">
+          <option value="in">上班</option>
+          <option value="out">下班</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">日期</label>
+        <input class="form-input" type="date" id="bfDate">
+      </div>
+      <div class="form-group">
+        <label class="form-label">時間</label>
+        <input class="form-input" type="time" id="bfTime">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">工作項目 / 備註（選填）</label>
+      <input class="form-input" type="text" id="bfDetail" placeholder="例：拍攝、剪輯、$2000 · 3趟">
+    </div>
+    <div id="bfAmtSection">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">跑車金額（選填）</label>
+          <input class="form-input" type="number" id="bfAmount" placeholder="0" inputmode="numeric">
+        </div>
+        <div class="form-group">
+          <label class="form-label">里程 km（選填）</label>
+          <input class="form-input" type="number" id="bfKm" placeholder="0" inputmode="numeric">
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:6px">
+      <button onclick="closeBackfill()" style="flex:1;padding:14px;background:var(--s3);color:var(--g5);border:none;border-radius:var(--r-sm);font-size:14px;font-family:var(--mono);cursor:pointer">取消</button>
+      <button onclick="saveBackfill()" style="flex:1;padding:14px;background:var(--w);color:var(--bg);border:none;border-radius:var(--r-sm);font-size:14px;font-family:var(--mono);cursor:pointer">補登</button>
+    </div>
+  </div>
+</div>
+
 <!-- Edit modal -->
 <div class="modal-overlay" id="editModal">
   <div class="modal-sheet">
@@ -584,20 +733,17 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--mono
 const CHEERS_IN=[['🌅','今天也是閃閃發光的一天！'],['☀️','準時到班，職場王者就是你！'],['💪','活力滿滿，今天必定大有作為！'],['🚀','打卡成功，出發！今天無可阻擋。'],['🎯','專注出發，目標就在眼前！'],['🌟','嶄新的一天，充滿無限可能！'],['🔥','燃起來了！今天要創造新紀錄！'],['🌈','每一天都是全新的開始，加油！'],['😎','精神抖擻，今天也要帥氣打拼！'],['✨','閃耀登場，今天屬於你！']];
 const CHEERS_OUT=[['🌙','辛苦了！今天的努力會有回報的。'],['🏆','完美收工，今天的你超棒的！'],['🛋️','好好休息，明天的你更精彩！'],['🌸','感謝今天的自己，認真拼搏了一天！'],['🎊','下班啦！去犒賞一下自己吧！'],['💫','完成！今天的付出都是值得的。'],['🍜','下班快樂！吃頓好的，好好放鬆！'],['🎵','一天辛苦結束，享受美好夜晚！'],['🌃','今天辛苦了，夜晚是你的時光！'],['🥂','幹得漂亮！今天任務完成！']];
 
-const SK={logs:'ck_logs3',events:'ck_events3',memos:'ck_memos3',status:'ck_status3'};
-function load(k){try{return JSON.parse(localStorage.getItem(SK[k])||'null');}catch(e){return null;}}
-function save(k,v){localStorage.setItem(SK[k],JSON.stringify(v));try{bc.postMessage({k,v});}catch(e){}}
+// Storage handled by Supabase
 
-let bc;
-try{bc=new BroadcastChannel('ck_sync3');bc.onmessage=e=>{const{k,v}=e.data;if(k==='logs'){logs=v;updateLogList(curFilter);if(curPage==='report')updateReport();showSyncPulse();}if(k==='events'){events=v;if(curPage==='calendar')renderCalendar();showSyncPulse();}if(k==='memos'){memos=v;if(curPage==='memo')renderMemos(curMemoFilter);showSyncPulse();}if(k==='status'){empStatus=v;updateStatusUI();showSyncPulse();}};}catch(e){bc={postMessage:()=>{}};}
+// Sync handled by Supabase Realtime
 
 function showSyncPulse(){const d=document.getElementById('syncDot');d.classList.add('live');setTimeout(()=>d.classList.remove('live'),1500);}
 
 let currentEmp='A',selectedTask='';
-let logs=load('logs')||[];
-let events=load('events')||[];
-let memos=load('memos')||[];
-let empStatus=load('status')||{A:'out',B:'out'};
+let logs=[];
+let events=[];
+let memos=[];
+let empStatus={A:'out',B:'out'};
 let calYear,calMonth,selectedDate=null;
 let curFilter='all',curMemoFilter='all',curPage='checkin';
 let deferredPrompt=null;
@@ -610,7 +756,7 @@ calYear=today0.getFullYear();calMonth=today0.getMonth();
 function tickClock(){document.getElementById('clock').textContent=new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});}
 tickClock();setInterval(tickClock,1000);
 
-(function(){const ds=today0.toLocaleDateString('zh-TW');['A','B'].forEach(emp=>{const tl=logs.filter(l=>l.emp===emp&&l.date===ds);if(tl.length)empStatus[emp]=tl[tl.length-1].type==='in'?'in':'out';});updateStatusUI();})();
+// Status restored in loadLogs()
 
 function updateStatusUI(){['A','B'].forEach(emp=>{const el=document.getElementById('status-'+emp.toLowerCase());if(!el)return;el.innerHTML=empStatus[emp]==='in'?`<span class="dot dot-in"></span><span style="color:var(--green)">上班中</span>`:`<span class="dot dot-out"></span>未打卡`;});}
 
@@ -687,8 +833,11 @@ function doCheckin(){
   }
   let workMins=0;
   if(type==='out'){const li=[...logs].reverse().find(l=>l.emp===currentEmp&&l.type==='in'&&l.date===date);if(li){const[ih,im]=li.time.split(':').map(Number);const[oh,om]=time.split(':').map(Number);workMins=Math.max(0,(oh*60+om)-(ih*60+im));}}
-  logs.push({emp:currentEmp,name,type,time,date,detail,amount,km,workMins,ts:now.getTime()});
-  save('logs',logs);empStatus[currentEmp]=type==='in'?'in':'out';save('status',empStatus);
+  const newLog = {emp:currentEmp,name,type,time,date,detail,amount,km,workMins,ts:now.getTime()};
+  logs.push(newLog);
+  empStatus[currentEmp]=type==='in'?'in':'out';
+  // Save to Supabase
+  sbInsert('logs', {emp:newLog.emp,name:newLog.name,type:newLog.type,time:newLog.time,date:newLog.date,detail:newLog.detail,amount:newLog.amount,km:newLog.km,work_mins:newLog.workMins,ts:newLog.ts});
   updateStatusUI();updateCheckinBtn();updateLogList(curFilter);
   selectedTask='';document.querySelectorAll('.task-pill').forEach(b=>b.classList.remove('active'));
   showCheer(type,time,workMins);
@@ -760,9 +909,11 @@ function saveEditLog(){
   logs[idx].date=document.getElementById('editDate').value;
   logs[idx].time=document.getElementById('editTime').value;
   logs[idx].detail=document.getElementById('editDetail').value;
-  save('logs',logs);updateLogList(curFilter);closeEditModal();showToast('紀錄已更新！');
+  const editedLog = logs[idx];
+  sbUpdate('logs','ts',editedLog.ts,{date:editedLog.date,time:editedLog.time,detail:editedLog.detail});
+  updateLogList(curFilter);closeEditModal();showToast('紀錄已更新！');
 }
-function deleteLog(ts){logs=logs.filter(l=>l.ts!==ts);save('logs',logs);updateLogList(curFilter);showToast('紀錄已刪除');swipedItem=null;}
+function deleteLog(ts){const log=logs.find(l=>l.ts===ts);if(log)sbDelete('logs','ts',ts);logs=logs.filter(l=>l.ts!==ts);updateLogList(curFilter);showToast('紀錄已刪除');swipedItem=null;}
 
 function generateQRCodes(){[['A'],['B']].forEach(([emp])=>{const canvas=document.getElementById('qr'+emp);const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,180,180);drawQR(ctx,`EMP_${emp}_${emp==='A'?'Yen':'4N'}`,180,'#111111');});}
 function drawQR(ctx,data,size,color){const m=21,cell=Math.floor(size/m),pat=genPat(data);ctx.fillStyle=color;for(let r=0;r<m;r++)for(let c=0;c<m;c++)if(pat[r][c])ctx.fillRect(c*cell,r*cell,cell-1,cell-1);[[0,0],[0,14],[14,0]].forEach(([r,c])=>{ctx.strokeStyle=color;ctx.lineWidth=cell;ctx.strokeRect(c*cell+cell/2,r*cell+cell/2,6*cell,6*cell);ctx.fillStyle=color;ctx.fillRect((c+2)*cell,(r+2)*cell,3*cell,3*cell);});}
@@ -781,13 +932,18 @@ function renderCalendar(){
 }
 function selectCalDay(dk){selectedDate=dk;renderCalendar();showDayEvents(dk);}
 function showDayEvents(dk){const p=dk.split('-');document.getElementById('dayTitle').textContent=parseInt(p[1])+'月'+parseInt(p[2])+'日';const evs=events.filter(e=>e.date===dk);const el=document.getElementById('dayEvents');if(!evs.length){el.innerHTML='<div style="font-size:12px;color:var(--g4)">當日無排程</div>';return;}const wl={A:'Yen',B:'4N',both:'兩人'};const wc={A:'#f0f0f0',B:'#888',both:'#ffd60a'};el.innerHTML=evs.map((e,i)=>`<div class="event-item"><div class="event-dot" style="background:${wc[e.who]}"></div><div style="flex:1"><div style="font-size:14px;color:var(--w)">${e.title}</div><div style="font-size:11px;color:var(--g4);margin-top:3px">${e.time?e.time+' · ':''}${e.note||''}</div><div style="font-size:10px;color:${wc[e.who]};margin-top:3px;text-transform:uppercase;letter-spacing:0.06em">${wl[e.who]}${e.remind&&e.remind!=='0'?' · ⏰ '+e.remind+'分前':''}</div></div><button class="event-del" onclick="deleteEvent('${dk}',${i})">×</button></div>`).join('');}
-function deleteEvent(dk,i){const all=events.reduce((a,e,j)=>{if(e.date===dk)a.push(j);return a;},[]);events.splice(all[i],1);save('events',events);renderCalendar();showDayEvents(dk);showToast('排程已刪除');}
+function deleteEvent(dk,i){
+  const all=events.reduce((a,e,j)=>{if(e.date===dk)a.push(j);return a;},[]);
+  const ev=events[all[i]];
+  if(ev&&ev._id) sbDelete('events','id',ev._id);
+  events.splice(all[i],1);renderCalendar();showDayEvents(dk);showToast('排程已刪除');
+}
 function changeMonth(dir){calMonth+=dir;if(calMonth>11){calMonth=0;calYear++;}if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
-function addEvent(){const title=document.getElementById('evTitle').value.trim();const date=document.getElementById('evDate').value;if(!title||!date){showToast('請填寫標題與日期');return;}const ev={title,date,time:document.getElementById('evTime').value,who:document.getElementById('evWho').value,note:document.getElementById('evNote').value.trim(),remind:document.getElementById('evRemind').value};events.push(ev);save('events',events);document.getElementById('evTitle').value='';document.getElementById('evNote').value='';scheduleEventNotif(ev);showToast('排程已新增！');selectedDate=date;renderCalendar();}
+function addEvent(){const title=document.getElementById('evTitle').value.trim();const date=document.getElementById('evDate').value;if(!title||!date){showToast('請填寫標題與日期');return;}const ev={title,date,time:document.getElementById('evTime').value,who:document.getElementById('evWho').value,note:document.getElementById('evNote').value.trim(),remind:document.getElementById('evRemind').value};events.push(ev);sbInsert('events',{title:ev.title,date:ev.date,time:ev.time,who:ev.who,note:ev.note,remind:ev.remind});sbInsert('events',{title:ev.title,date:ev.date,time:ev.time,who:ev.who,note:ev.note,remind:ev.remind});document.getElementById('evTitle').value='';document.getElementById('evNote').value='';scheduleEventNotif(ev);showToast('排程已新增！');selectedDate=date;renderCalendar();}
 
-function addMemo(){const text=document.getElementById('memoText').value.trim();if(!text){showToast('請輸入備忘內容');return;}const now=new Date();memos.unshift({who:document.getElementById('memoWho').value,text,date:now.toLocaleDateString('zh-TW'),time:now.toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'}),id:now.getTime()});save('memos',memos);document.getElementById('memoText').value='';renderMemos(curMemoFilter);showToast('備忘已儲存！');}
+function addMemo(){const text=document.getElementById('memoText').value.trim();if(!text){showToast('請輸入備忘內容');return;}const now=new Date();const newMemo={who:document.getElementById('memoWho').value,text,date:now.toLocaleDateString('zh-TW'),time:now.toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'}),id:now.getTime()};memos.unshift(newMemo);sbInsert('memos',{who:newMemo.who,text:newMemo.text,date:newMemo.date,time:newMemo.time,memo_id:newMemo.id});document.getElementById('memoText').value='';renderMemos(curMemoFilter);showToast('備忘已儲存！');}
 function renderMemos(filter){curMemoFilter=filter;const el=document.getElementById('memoList');const filtered=filter==='all'?memos:memos.filter(m=>m.who===filter);if(!filtered.length){el.innerHTML='<div class="empty">尚無備忘</div>';return;}const wn={A:'Yen',B:'4N'};el.innerHTML='<div class="memo-grid">'+filtered.map(m=>`<div class="memo-item"><div class="memo-who">${wn[m.who]}</div><div class="memo-text">${m.text.replace(/\n/g,'<br>')}</div><div class="memo-date" style="margin-top:8px">${m.date}</div><button class="memo-del" onclick="deleteMemo(${m.id})">×</button></div>`).join('')+'</div>';}
-function deleteMemo(id){memos=memos.filter(m=>m.id!==id);save('memos',memos);renderMemos(curMemoFilter);showToast('備忘已刪除');}
+function deleteMemo(id){const m=memos.find(m=>m.id===id);if(m&&m._id)sbDelete('memos','id',m._id);else sbDelete('memos','memo_id',id);memos=memos.filter(m=>m.id!==id);renderMemos(curMemoFilter);showToast('備忘已刪除');}
 function filterMemo(filter,btn){document.querySelectorAll('#page-memo .filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderMemos(filter);}
 
 function updateReport(){
@@ -817,6 +973,57 @@ function updateReport(){
   if(!logs.length){tb.innerHTML='<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--g3)">尚無資料</td></tr>';return;}
   tb.innerHTML=[...logs].reverse().map(l=>`<tr><td>${l.date}<br>${l.time}</td><td style="font-size:11px">${l.name}</td><td><span class="badge ${l.type==='in'?'badge-in':'badge-out'}" style="font-size:9px">${l.type==='in'?'IN':'OUT'}</span></td><td>${l.detail||'—'}</td><td>${l.amount>0?'$'+l.amount.toLocaleString():'—'}${l.km>0?' / '+l.km+'km':''}</td></tr>`).join('');
 }
+function openBackfill(){
+  // Set default date to today
+  const now=new Date();
+  document.getElementById('bfDate').value=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+  document.getElementById('bfTime').value=now.toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'}).replace('上午','').replace('下午','').trim();
+  document.getElementById('bfDetail').value='';
+  document.getElementById('bfAmount').value='';
+  document.getElementById('bfKm').value='';
+  // Show/hide amt section based on emp
+  toggleBfAmt();
+  document.getElementById('backfillModal').classList.add('show');
+}
+function toggleBfAmt(){
+  const emp=document.getElementById('bfEmp').value;
+  const type=document.getElementById('bfType').value;
+  document.getElementById('bfAmtSection').style.display=(emp==='B'&&type==='out')?'block':'none';
+}
+// Add listeners for dynamic show/hide
+document.addEventListener('DOMContentLoaded',()=>{
+  const bfEmp=document.getElementById('bfEmp');
+  const bfType=document.getElementById('bfType');
+  if(bfEmp) bfEmp.addEventListener('change',toggleBfAmt);
+  if(bfType) bfType.addEventListener('change',toggleBfAmt);
+});
+function closeBackfill(){document.getElementById('backfillModal').classList.remove('show');}
+async function saveBackfill(){
+  const emp=document.getElementById('bfEmp').value;
+  const type=document.getElementById('bfType').value;
+  const dateVal=document.getElementById('bfDate').value;
+  const timeVal=document.getElementById('bfTime').value;
+  if(!dateVal||!timeVal){showToast('請填寫日期與時間');return;}
+  // Convert date from yyyy-mm-dd to zh-TW locale format
+  const [y,m,d]=dateVal.split('-');
+  const dateZh=new Date(parseInt(y),parseInt(m)-1,parseInt(d)).toLocaleDateString('zh-TW');
+  const name=emp==='A'?'Yen':'4N';
+  const detail=document.getElementById('bfDetail').value.trim();
+  const amount=parseInt(document.getElementById('bfAmount').value)||0;
+  const km=parseInt(document.getElementById('bfKm').value)||0;
+  // Create timestamp from date+time
+  const [hh,mm]=(timeVal||'00:00').split(':');
+  const ts=new Date(parseInt(y),parseInt(m)-1,parseInt(d),parseInt(hh),parseInt(mm)).getTime();
+  const newLog={emp,name,type,time:timeVal,date:dateZh,detail,amount,km,workMins:0,ts};
+  logs.push(newLog);
+  // Sort logs by ts
+  logs.sort((a,b)=>a.ts-b.ts);
+  await sbInsert('logs',{emp:newLog.emp,name:newLog.name,type:newLog.type,time:newLog.time,date:newLog.date,detail:newLog.detail,amount:newLog.amount,km:newLog.km,work_mins:0,ts:newLog.ts});
+  updateLogList(curFilter);
+  closeBackfill();
+  showToast('補登成功！'+dateZh+' '+timeVal);
+}
+
 function exportCSV(){if(!logs.length){showToast('尚無資料可匯出');return;}const rows=[['日期','時間','員工','打卡類型','工作項目','跑車金額','里程km','工時min']];logs.forEach(l=>rows.push([l.date,l.time,l.name,l.type==='in'?'上班':'下班',l.detail||'',l.amount||'',l.km||'',l.workMins||'']));const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\uFEFF'+rows.map(r=>r.join(',')).join('\n')],{type:'text/csv;charset=utf-8;'}));a.download='打卡紀錄_'+new Date().toLocaleDateString('zh-TW').replace(/\//g,'-')+'.csv';a.click();showToast('CSV 匯出成功！');}
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600);}
@@ -824,8 +1031,10 @@ function showToast(msg){const t=document.getElementById('toast');t.textContent=m
 // Init
 selectEmp('A');
 document.getElementById('evDate').value=today0.getFullYear()+'-'+String(today0.getMonth()+1).padStart(2,'0')+'-'+String(today0.getDate()).padStart(2,'0');
-updateLogList('all');
-if(notifGranted)events.forEach(scheduleEventNotif);
+// Load from Supabase (replaces localStorage)
+initData().then(()=>{
+  if(notifGranted) events.forEach(scheduleEventNotif);
+});
 </script>
 </body>
 </html>
