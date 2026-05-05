@@ -313,37 +313,75 @@ const _SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
 const _sb = supabase.createClient(_SB_URL, _SB_KEY);
 
 // ── Supabase helpers ──────────────────────────────────────────────
+let _sbReady = false;
+
 async function sbFetch(table) {
-  const { data, error } = await _sb.from(table).select('*').order('created_at', { ascending: true });
-  if (error) { console.error('fetch', table, error); return []; }
-  return data || [];
+  try {
+    const { data, error } = await _sb.from(table).select('*').order('created_at', { ascending: true });
+    if (error) { console.error('sbFetch error', table, error.message); return []; }
+    return data || [];
+  } catch(e) { console.error('sbFetch exception', table, e); return []; }
 }
 async function sbInsert(table, row) {
-  const { error } = await _sb.from(table).insert([row]);
-  if (error) console.error('insert', table, error);
+  try {
+    const { error } = await _sb.from(table).insert([row]);
+    if (error) { console.error('sbInsert error', table, error.message); showToast('⚠️ 儲存失敗：' + error.message); return false; }
+    return true;
+  } catch(e) { console.error('sbInsert exception', e); showToast('⚠️ 網路錯誤，請重試'); return false; }
 }
 async function sbDelete(table, col, val) {
-  const { error } = await _sb.from(table).delete().eq(col, val);
-  if (error) console.error('delete', table, error);
+  try {
+    const { error } = await _sb.from(table).delete().eq(col, val);
+    if (error) { console.error('sbDelete error', table, error.message); return false; }
+    return true;
+  } catch(e) { console.error('sbDelete exception', e); return false; }
 }
 async function sbUpdate(table, col, val, row) {
-  const { error } = await _sb.from(table).update(row).eq(col, val);
-  if (error) console.error('update', table, error);
+  try {
+    const { error } = await _sb.from(table).update(row).eq(col, val);
+    if (error) { console.error('sbUpdate error', table, error.message); return false; }
+    return true;
+  } catch(e) { console.error('sbUpdate exception', e); return false; }
+}
+
+// Connection test
+async function testConnection() {
+  try {
+    const { data, error } = await _sb.from('logs').select('count', { count: 'exact', head: true });
+    if (error) {
+      console.error('Connection test failed:', error.message);
+      document.getElementById('syncDot').style.background = 'var(--red)';
+      showToast('⚠️ 資料庫連線失敗：' + error.message);
+      return false;
+    }
+    _sbReady = true;
+    document.getElementById('syncDot').style.background = 'var(--green)';
+    document.getElementById('syncDot').style.boxShadow = '0 0 6px var(--green)';
+    return true;
+  } catch(e) {
+    console.error('Connection test exception:', e);
+    document.getElementById('syncDot').style.background = 'var(--red)';
+    return false;
+  }
 }
 
 // ── Real-time subscriptions ───────────────────────────────────────
 function setupRealtime() {
-  _sb.channel('db-changes')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'logs' }, () => {
-      loadLogs();
-    })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, () => {
-      loadEvents();
-    })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'memos' }, () => {
-      loadMemos();
-    })
-    .subscribe();
+  try {
+    _sb.channel('db-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'logs' }, () => { loadLogs(); })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, () => { loadEvents(); })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'memos' }, () => { loadMemos(); })
+      .subscribe((status) => {
+        console.log('Realtime status:', status);
+        if (status === 'SUBSCRIBED') {
+          document.getElementById('syncDot').classList.add('live');
+          setTimeout(() => document.getElementById('syncDot').classList.remove('live'), 2000);
+        }
+      });
+  } catch(e) {
+    console.error('Realtime setup error:', e);
+  }
 }
 
 // ── Load from Supabase ────────────────────────────────────────────
@@ -389,8 +427,15 @@ async function loadMemos() {
 }
 
 async function initData() {
+  showToast('連線中...');
+  const ok = await testConnection();
+  if (!ok) {
+    showToast('⚠️ 無法連線，請檢查網路');
+    return;
+  }
   await Promise.all([loadLogs(), loadEvents(), loadMemos()]);
   setupRealtime();
+  showToast('✓ 資料同步完成');
 }
 </script>
 </head>
