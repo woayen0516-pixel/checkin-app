@@ -204,7 +204,13 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--mono
 .cal-num{font-size:12px;color:var(--g5)}
 .cal-day.today .cal-num{color:var(--w)}
 .cal-dots{display:flex;flex-wrap:wrap;gap:2px;margin-top:3px}
-.cal-dot{width:4px;height:4px;border-radius:50%}
+.cal-dot{width:5px;height:5px;border-radius:50%}
+.ev-color-white{background:#f0f0f0}
+.ev-color-blue{background:#4a9eff}
+.ev-color-green{background:#30d158}
+.ev-color-yellow{background:#ffd60a}
+.ev-color-red{background:#ff453a}
+.ev-color-purple{background:#bf5af2}
 .event-item{display:flex;align-items:flex-start;gap:10px;padding:12px 0;border-bottom:0.5px solid var(--g1)}
 .event-item:last-child{border-bottom:none}
 .event-dot{width:8px;height:8px;border-radius:50%;margin-top:4px;flex-shrink:0}
@@ -411,8 +417,10 @@ async function loadLogs() {
 async function loadEvents() {
   const rows = await sbFetch('events');
   events = rows.map(r => ({
-    title: r.title, date: r.date, time: r.time,
-    who: r.who, note: r.note||'', remind: r.remind||'0', _id: r.id
+    title: r.title, date: r.date, time: r.time||'',
+    endDate: r.end_date||'', endTime: r.end_time||'',
+    who: r.who, color: r.color||'white',
+    note: r.note||'', remind: r.remind||'0', _id: r.id
   }));
   if (curPage==='calendar') renderCalendar();
   showSyncPulse();
@@ -600,12 +608,40 @@ async function initData() {
       <div class="group"><div style="padding:16px">
         <div class="form-group"><label class="form-label">標題</label><input class="form-input" type="text" id="evTitle" placeholder="排程名稱"></div>
         <div class="form-row">
-          <div class="form-group"><label class="form-label">日期</label><input class="form-input" type="date" id="evDate"></div>
-          <div class="form-group"><label class="form-label">時間</label><input class="form-input" type="time" id="evTime"></div>
+          <div class="form-group"><label class="form-label">開始日期</label><input class="form-input" type="date" id="evDate"></div>
+          <div class="form-group"><label class="form-label">開始時間</label><input class="form-input" type="time" id="evTime"></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label class="form-label">對象</label><select class="form-input" id="evWho"><option value="A">Yen</option><option value="B">4N</option><option value="both">兩人</option></select></div>
-          <div class="form-group"><label class="form-label">提醒</label><select class="form-input" id="evRemind"><option value="0">不提醒</option><option value="10">10 分前</option><option value="30" selected>30 分前</option><option value="60">1 小時前</option><option value="1440">1 天前</option></select></div>
+          <div class="form-group"><label class="form-label">結束日期（選填）</label><input class="form-input" type="date" id="evEndDate"></div>
+          <div class="form-group"><label class="form-label">結束時間（選填）</label><input class="form-input" type="time" id="evEndTime"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">對象</label><select class="form-input" id="evWho"><option value="A">Yen 🐸</option><option value="B">4N 🐵</option><option value="both">兩人</option></select></div>
+          <div class="form-group"><label class="form-label">顏色標記</label><select class="form-input" id="evColor">
+            <option value="white">⬜ 預設</option>
+            <option value="blue">🔵 藍</option>
+            <option value="green">🟢 綠</option>
+            <option value="yellow">🟡 黃</option>
+            <option value="red">🔴 紅</option>
+            <option value="purple">🟣 紫</option>
+          </select></div>
+        </div>
+        <div class="form-group"><label class="form-label">提醒</label><select class="form-input" id="evRemind" onchange="toggleCustomRemind(this)">
+          <option value="0">不提醒</option>
+          <option value="10">10 分鐘前</option>
+          <option value="30">30 分鐘前</option>
+          <option value="60">1 小時前</option>
+          <option value="360">6 小時前</option>
+          <option value="720">12 小時前</option>
+          <option value="1440" selected>1 天前</option>
+          <option value="2880">2 天前</option>
+          <option value="4320">3 天前</option>
+          <option value="10080">7 天前</option>
+          <option value="custom">自訂天數...</option>
+        </select></div>
+        <div class="form-group" id="customRemindGroup" style="display:none">
+          <label class="form-label">提前幾天提醒</label>
+          <input class="form-input" type="number" id="customRemindDays" placeholder="例：5" min="1" max="60" inputmode="numeric">
         </div>
         <div class="form-group"><label class="form-label">備註</label><input class="form-input" type="text" id="evNote" placeholder="選填"></div>
         <button class="add-btn" onclick="addEvent()">新增排程</button>
@@ -973,12 +1009,39 @@ function renderCalendar(){
   const first=new Date(calYear,calMonth,1).getDay();const total=new Date(calYear,calMonth+1,0).getDate();const prevTotal=new Date(calYear,calMonth,0).getDate();const today=new Date();
   let html='';
   for(let i=0;i<first;i++)html+=`<div class="cal-day other-month"><div class="cal-num">${prevTotal-first+1+i}</div></div>`;
-  for(let d=1;d<=total;d++){const dk=calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');const evs=events.filter(e=>e.date===dk);const isToday=today.getFullYear()===calYear&&today.getMonth()===calMonth&&today.getDate()===d;const isSel=selectedDate===dk;let cls='cal-day';if(isToday)cls+=' today';if(evs.length)cls+=' has-event';if(isSel)cls+=' selected';const wc={A:'#f0f0f0',B:'#666',both:'#ffd60a'};const dots=evs.map(e=>`<span class="cal-dot" style="background:${wc[e.who]||'#888'}"></span>`).join('');html+=`<div class="${cls}" onclick="selectCalDay('${dk}')"><div class="cal-num">${d}</div><div class="cal-dots">${dots}</div></div>`;}
+  for(let d=1;d<=total;d++){const dk=calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');const evs=events.filter(e=>e.date===dk);const isToday=today.getFullYear()===calYear&&today.getMonth()===calMonth&&today.getDate()===d;const isSel=selectedDate===dk;let cls='cal-day';if(isToday)cls+=' today';if(evs.length)cls+=' has-event';if(isSel)cls+=' selected';const colorMap={white:'#f0f0f0',blue:'#4a9eff',green:'#30d158',yellow:'#ffd60a',red:'#ff453a',purple:'#bf5af2'};
+    const whoColor={A:'#f0f0f0',B:'#30d158',both:'#ffd60a'};
+    const dots=evs.map(e=>{const c=e.color&&e.color!=='white'?colorMap[e.color]:whoColor[e.who]||'#f0f0f0';return`<span class="cal-dot" style="background:${c}"></span>`;}).join('');html+=`<div class="${cls}" onclick="selectCalDay('${dk}')"><div class="cal-num">${d}</div><div class="cal-dots">${dots}</div></div>`;}
   for(let d=1;d<=42-first-total;d++)html+=`<div class="cal-day other-month"><div class="cal-num">${d}</div></div>`;
   grid.innerHTML=html;if(selectedDate)showDayEvents(selectedDate);
 }
 function selectCalDay(dk){selectedDate=dk;renderCalendar();showDayEvents(dk);}
-function showDayEvents(dk){const p=dk.split('-');document.getElementById('dayTitle').textContent=parseInt(p[1])+'月'+parseInt(p[2])+'日';const evs=events.filter(e=>e.date===dk);const el=document.getElementById('dayEvents');if(!evs.length){el.innerHTML='<div style="font-size:12px;color:var(--g4)">當日無排程</div>';return;}const wl={A:'Yen',B:'4N',both:'兩人'};const wc={A:'#f0f0f0',B:'#888',both:'#ffd60a'};el.innerHTML=evs.map((e,i)=>`<div class="event-item"><div class="event-dot" style="background:${wc[e.who]}"></div><div style="flex:1"><div style="font-size:14px;color:var(--w)">${e.title}</div><div style="font-size:11px;color:var(--g4);margin-top:3px">${e.time?e.time+' · ':''}${e.note||''}</div><div style="font-size:10px;color:${wc[e.who]};margin-top:3px;text-transform:uppercase;letter-spacing:0.06em">${wl[e.who]}${e.remind&&e.remind!=='0'?' · ⏰ '+e.remind+'分前':''}</div></div><button class="event-del" onclick="deleteEvent('${dk}',${i})">×</button></div>`).join('');}
+function showDayEvents(dk){
+  const p=dk.split('-');
+  document.getElementById('dayTitle').textContent=parseInt(p[1])+'月'+parseInt(p[2])+'日';
+  const evs=events.filter(e=>e.date===dk);
+  const el=document.getElementById('dayEvents');
+  if(!evs.length){el.innerHTML='<div style="font-size:12px;color:var(--g4)">當日無排程</div>';return;}
+  const wl={A:'Yen 🐸',B:'4N 🐵',both:'兩人'};
+  const cmap={white:'#f0f0f0',blue:'#4a9eff',green:'#30d158',yellow:'#ffd60a',red:'#ff453a',purple:'#bf5af2'};
+  const wcol={A:'#f0f0f0',B:'#30d158',both:'#ffd60a'};
+  function rl(r){if(!r||r==='0')return'';const m=parseInt(r);if(m<60)return m+'分鐘前';if(m<1440)return(m/60)+'小時前';const d=m/1440;return d===1?'1天前':d+'天前';}
+  el.innerHTML=evs.map((e,i)=>{
+    const c=e.color&&e.color!=='white'?cmap[e.color]:wcol[e.who]||'#f0f0f0';
+    const ts=e.time?(e.endDate?e.date+' '+e.time+' → '+e.endDate+(e.endTime?' '+e.endTime:''):e.time):'';
+    return '<div class="event-item">'
+      +'<div class="event-dot" style="background:'+c+';width:10px;height:10px;border-radius:50%;margin-top:3px;flex-shrink:0"></div>'
+      +'<div style="flex:1">'
+      +'<div style="font-size:14px;color:var(--w);font-weight:500">'+e.title+'</div>'
+      +'<div style="font-size:11px;color:var(--g4);margin-top:3px">'+ts+(e.note?' · '+e.note:'')+'</div>'
+      +'<div style="font-size:10px;margin-top:4px;display:flex;gap:8px">'
+      +'<span style="color:'+c+'">'+wl[e.who]+'</span>'
+      +(e.remind&&e.remind!=='0'?'<span style="color:var(--g3)">⏰ '+rl(e.remind)+'</span>':'')
+      +'</div></div>'
+      +'<button class="event-del" onclick="deleteEvent(''+dk+'','+i+')">×</button>'
+      +'</div>';
+  }).join('');
+}
 function deleteEvent(dk,i){
   const all=events.reduce((a,e,j)=>{if(e.date===dk)a.push(j);return a;},[]);
   const ev=events[all[i]];
@@ -986,7 +1049,18 @@ function deleteEvent(dk,i){
   events.splice(all[i],1);renderCalendar();showDayEvents(dk);showToast('排程已刪除');
 }
 function changeMonth(dir){calMonth+=dir;if(calMonth>11){calMonth=0;calYear++;}if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
-function addEvent(){const title=document.getElementById('evTitle').value.trim();const date=document.getElementById('evDate').value;if(!title||!date){showToast('請填寫標題與日期');return;}const ev={title,date,time:document.getElementById('evTime').value,who:document.getElementById('evWho').value,note:document.getElementById('evNote').value.trim(),remind:document.getElementById('evRemind').value};events.push(ev);sbInsert('events',{title:ev.title,date:ev.date,time:ev.time,who:ev.who,note:ev.note,remind:ev.remind});sbInsert('events',{title:ev.title,date:ev.date,time:ev.time,who:ev.who,note:ev.note,remind:ev.remind});document.getElementById('evTitle').value='';document.getElementById('evNote').value='';scheduleEventNotif(ev);showToast('排程已新增！');selectedDate=date;renderCalendar();}
+function toggleCustomRemind(sel){document.getElementById('customRemindGroup').style.display=sel.value==='custom'?'block':'none';}
+function addEvent(){
+  const title=document.getElementById('evTitle').value.trim();
+  const date=document.getElementById('evDate').value;
+  if(!title||!date){showToast('請填寫標題與日期');return;}
+  let remind=document.getElementById('evRemind').value;
+  if(remind==='custom'){const days=parseInt(document.getElementById('customRemindDays').value)||1;remind=String(days*1440);}
+  const ev={title,date,time:document.getElementById('evTime').value||'',endDate:document.getElementById('evEndDate').value||'',endTime:document.getElementById('evEndTime').value||'',who:document.getElementById('evWho').value,color:document.getElementById('evColor').value||'white',note:document.getElementById('evNote').value.trim(),remind};
+  events.push(ev);
+  sbInsert('events',{title:ev.title,date:ev.date,time:ev.time,end_date:ev.endDate,end_time:ev.endTime,who:ev.who,color:ev.color,note:ev.note,remind:ev.remind});
+  document.getElementById('evTitle').value='';document.getElementById('evNote').value='';document.getElementById('evEndDate').value='';document.getElementById('evEndTime').value='';document.getElementById('customRemindGroup').style.display='none';
+  scheduleEventNotif(ev);showToast('排程已新增！');selectedDate=date;renderCalendar();}
 
 function addMemo(){const text=document.getElementById('memoText').value.trim();if(!text){showToast('請輸入備忘內容');return;}const now=new Date();const newMemo={who:document.getElementById('memoWho').value,text,date:now.toLocaleDateString('zh-TW'),time:now.toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'}),id:now.getTime()};memos.unshift(newMemo);sbInsert('memos',{who:newMemo.who,text:newMemo.text,date:newMemo.date,time:newMemo.time,memo_id:newMemo.id});document.getElementById('memoText').value='';renderMemos(curMemoFilter);showToast('備忘已儲存！');}
 function renderMemos(filter){curMemoFilter=filter;const el=document.getElementById('memoList');const filtered=filter==='all'?memos:memos.filter(m=>m.who===filter);if(!filtered.length){el.innerHTML='<div class="empty">尚無備忘</div>';return;}const wn={A:'Yen',B:'4N'};el.innerHTML='<div class="memo-grid">'+filtered.map(m=>`<div class="memo-item"><div class="memo-who">${wn[m.who]}</div><div class="memo-text">${m.text.replace(/\n/g,'<br>')}</div><div class="memo-date" style="margin-top:8px">${m.date}</div><button class="memo-del" onclick="deleteMemo(${m.id})">×</button></div>`).join('')+'</div>';}
