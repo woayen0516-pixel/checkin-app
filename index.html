@@ -309,7 +309,7 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--mono
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const _SB_URL = 'https://zoabvuslsztfyhhllfvo.supabase.co';
-const _SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpvYWJ2dXNsc3p0ZnloaGxsZnZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5NjExNzgsImV4cCI6MjA5MzUzNzE3OH0.c7xhte_m062jPMPn1wa5oZDhA14cir3DY8Hy0yec_zQ';
+const _SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpvYWJ2dXNsc3p0ZnloaGxsZnZvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Nzk2MTE3OCwiZXhwIjoyMDkzNTM3MTc4fQ.dGeD9zbUsZxBrkfJmIHm80eiA3XoNlOI850wldhzgv4';
 const _sb = supabase.createClient(_SB_URL, _SB_KEY);
 
 // ── Supabase helpers ──────────────────────────────────────────────
@@ -347,11 +347,12 @@ async function sbUpdate(table, col, val, row) {
 // Connection test
 async function testConnection() {
   try {
-    const { data, error } = await _sb.from('logs').select('count', { count: 'exact', head: true });
+    // Use a simple insert test to check write permission
+    const { data, error } = await _sb.from('logs').select('id').limit(1);
     if (error) {
-      console.error('Connection test failed:', error.message);
-      document.getElementById('syncDot').style.background = 'var(--red)';
-      showToast('⚠️ 資料庫連線失敗：' + error.message);
+      console.error('Connection test failed:', error.message, error.code, error.hint);
+      document.getElementById('syncDot').style.background = '#ff453a';
+      showToast('⚠️ ' + error.code + ': ' + error.message);
       return false;
     }
     _sbReady = true;
@@ -360,7 +361,8 @@ async function testConnection() {
     return true;
   } catch(e) {
     console.error('Connection test exception:', e);
-    document.getElementById('syncDot').style.background = 'var(--red)';
+    document.getElementById('syncDot').style.background = '#ff453a';
+    showToast('⚠️ 連線異常：' + e.message);
     return false;
   }
 }
