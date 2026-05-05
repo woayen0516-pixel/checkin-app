@@ -1,4 +1,4 @@
-const CACHE = 'checkin-v1';
+const CACHE = 'checkin-v3';
 const ASSETS = ['/', '/index.html'];
 
 self.addEventListener('install', e => {
