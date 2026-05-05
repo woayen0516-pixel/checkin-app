@@ -195,16 +195,21 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--mono
 .cal-title{font-family:var(--disp);font-size:22px;letter-spacing:0.08em}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
 .cal-day-label{text-align:center;font-size:10px;color:var(--g3);padding:4px 0}
-.cal-day{min-height:44px;border-radius:8px;padding:5px;cursor:pointer;background:var(--s2);transition:all 0.15s}
+.cal-day{min-height:52px;border-radius:8px;padding:5px 4px 4px;cursor:pointer;background:var(--s2);transition:all 0.15s;position:relative;overflow:hidden}
 .cal-day:active{background:var(--s3)}
 .cal-day.today{background:var(--s3);outline:1.5px solid var(--w)}
 .cal-day.selected{outline:1.5px solid var(--w)}
-.cal-day.has-event{outline:1px solid var(--g2)}
 .cal-day.other-month{opacity:0.2}
-.cal-num{font-size:12px;color:var(--g5)}
-.cal-day.today .cal-num{color:var(--w)}
-.cal-dots{display:flex;flex-wrap:wrap;gap:2px;margin-top:3px}
+.cal-num{font-size:11px;color:var(--g5);position:relative;z-index:1}
+.cal-day.today .cal-num{color:var(--w);font-weight:600}
+.cal-dots{display:flex;flex-direction:column;gap:2px;margin-top:3px}
 .cal-dot{width:5px;height:5px;border-radius:50%}
+/* 多天活動橫條 */
+.cal-bar{height:5px;border-radius:2px;margin-top:2px;position:relative;z-index:1}
+.cal-bar.bar-start{border-radius:3px 0 0 3px;margin-right:-4px}
+.cal-bar.bar-mid{border-radius:0;margin-left:-4px;margin-right:-4px}
+.cal-bar.bar-end{border-radius:0 3px 3px 0;margin-left:-4px}
+.cal-bar.bar-single{border-radius:3px}
 .ev-color-white{background:#f0f0f0}
 .ev-color-blue{background:#4a9eff}
 .ev-color-green{background:#30d158}
@@ -1006,15 +1011,65 @@ function renderCalendar(){
   document.getElementById('calTitle').textContent=calYear+' · '+(calMonth+1);
   document.getElementById('calLabels').innerHTML=['S','M','T','W','T','F','S'].map(d=>`<div class="cal-day-label">${d}</div>`).join('');
   const grid=document.getElementById('calGrid');
-  const first=new Date(calYear,calMonth,1).getDay();const total=new Date(calYear,calMonth+1,0).getDate();const prevTotal=new Date(calYear,calMonth,0).getDate();const today=new Date();
-  let html='';
-  for(let i=0;i<first;i++)html+=`<div class="cal-day other-month"><div class="cal-num">${prevTotal-first+1+i}</div></div>`;
-  for(let d=1;d<=total;d++){const dk=calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');const evs=events.filter(e=>e.date===dk);const isToday=today.getFullYear()===calYear&&today.getMonth()===calMonth&&today.getDate()===d;const isSel=selectedDate===dk;let cls='cal-day';if(isToday)cls+=' today';if(evs.length)cls+=' has-event';if(isSel)cls+=' selected';const colorMap={white:'#f0f0f0',blue:'#4a9eff',green:'#30d158',yellow:'#ffd60a',red:'#ff453a',purple:'#bf5af2'};
-    const whoColor={A:'#f0f0f0',B:'#30d158',both:'#ffd60a'};
-    const dots=evs.map(e=>{const c=e.color&&e.color!=='white'?colorMap[e.color]:whoColor[e.who]||'#f0f0f0';return`<span class="cal-dot" style="background:${c}"></span>`;}).join('');html+=`<div class="${cls}" onclick="selectCalDay('${dk}')"><div class="cal-num">${d}</div><div class="cal-dots">${dots}</div></div>`;}
-  for(let d=1;d<=42-first-total;d++)html+=`<div class="cal-day other-month"><div class="cal-num">${d}</div></div>`;
-  grid.innerHTML=html;if(selectedDate)showDayEvents(selectedDate);
+  const first=new Date(calYear,calMonth,1).getDay();
+  const total=new Date(calYear,calMonth+1,0).getDate();
+  const prevTotal=new Date(calYear,calMonth,0).getDate();
+  const today=new Date();
+  const cmap={white:'#f0f0f0',blue:'#4a9eff',green:'#30d158',yellow:'#ffd60a',red:'#ff453a',purple:'#bf5af2'};
+  const wcol={A:'#f0f0f0',B:'#30d158',both:'#ffd60a'};
+
+  // Build a map: dateKey -> list of {color, isStart, isMid, isEnd, title}
+  const barMap={};
+  events.forEach(ev=>{
+    const c=ev.color&&ev.color!=='white'?cmap[ev.color]:wcol[ev.who]||'#f0f0f0';
+    if(ev.endDate&&ev.endDate!==ev.date){
+      // Multi-day event - fill all days
+      let cur=new Date(ev.date+'T00:00:00');
+      const end=new Date(ev.endDate+'T00:00:00');
+      let isFirst=true;
+      while(cur<=end){
+        const dk=cur.getFullYear()+'-'+String(cur.getMonth()+1).padStart(2,'0')+'-'+String(cur.getDate()).padStart(2,'0');
+        if(!barMap[dk]) barMap[dk]=[];
+        const isLast=cur.getTime()===end.getTime();
+        barMap[dk].push({color:c,type:isFirst?'start':isLast?'end':'mid',title:ev.title});
+        isFirst=false;
+        cur.setDate(cur.getDate()+1);
+      }
+    } else {
+      // Single day
+      const dk=ev.date;
+      if(!barMap[dk]) barMap[dk]=[];
+      barMap[dk].push({color:c,type:'single',title:ev.title});
+    }
+  });
+
+  let html2='';
+  for(let i=0;i<first;i++) html2+=`<div class="cal-day other-month"><div class="cal-num">${prevTotal-first+1+i}</div></div>`;
+  for(let d=1;d<=total;d++){
+    const dk=calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const bars=barMap[dk]||[];
+    const isToday=today.getFullYear()===calYear&&today.getMonth()===calMonth&&today.getDate()===d;
+    const isSel=selectedDate===dk;
+    let cls='cal-day';
+    if(isToday) cls+=' today';
+    if(isSel) cls+=' selected';
+    const barsHtml=bars.map(b=>{
+      let bc='cal-bar bar-'+b.type;
+      // For mid/end bars, extend to left edge; for start/mid extend to right edge
+      let style=`background:${b.color};opacity:0.85;`;
+      if(b.type==='mid') style+='margin-left:-5px;margin-right:-5px;border-radius:0;';
+      else if(b.type==='start') style+='margin-right:-5px;border-radius:3px 0 0 3px;';
+      else if(b.type==='end') style+='margin-left:-5px;border-radius:0 3px 3px 0;';
+      else style+='border-radius:3px;';
+      return `<div class="${bc}" style="${style}height:5px;"></div>`;
+    }).join('');
+    html2+=`<div class="${cls}" onclick="selectCalDay('${dk}')"><div class="cal-num">${d}</div><div class="cal-dots">${barsHtml}</div></div>`;
+  }
+  for(let d=1;d<=42-first-total;d++) html2+=`<div class="cal-day other-month"><div class="cal-num">${d}</div></div>`;
+  grid.innerHTML=html2;
+  if(selectedDate) showDayEvents(selectedDate);
 }
+
 function selectCalDay(dk){selectedDate=dk;renderCalendar();showDayEvents(dk);}
 function showDayEvents(dk){
   const p=dk.split('-');
