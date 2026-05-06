@@ -1167,19 +1167,9 @@ async function sbInsert(table,row){
   try{
     const r=await fetch(SB+'/rest/v1/'+table,{method:'POST',headers:{...SBH,'Prefer':'return=representation'},body:JSON.stringify(row)});
     const t=await r.text();
-    if(!r.ok){
-      console.error('sbInsert error',table,r.status,t);
-      let msg=r.status+'';
-      try{const j=JSON.parse(t);msg=j.message||j.hint||j.details||msg;}catch(e){}
-      showToast('⚠️ '+table+' 儲存失敗：'+msg);
-      return false;
-    }
+    if(!r.ok){console.error('sbInsert error',table,t);return false;}
     try{return JSON.parse(t);}catch(e){return true;}
-  }catch(e){
-    console.error('sbInsert error',table,e);
-    showToast('⚠️ 網路錯誤：'+e.message);
-    return false;
-  }
+  }catch(e){console.error('sbInsert error',table,e);return false;}
 }
 async function sbDelete(table, col, val) {
   try {
@@ -1196,7 +1186,6 @@ async function sbUpdate(table, col, val, row) {
   } catch(e){console.error('sbUpdate exception',e);return false;}
 }
 
-// Connection test — pure fetch only (no _sb client, avoids DataCloneError on iOS Safari)
 async function testConnection() {
   try {
     const r=await fetch(SB+'/rest/v1/logs?select=id&limit=1',{headers:SBH});
@@ -1206,15 +1195,12 @@ async function testConnection() {
     document.getElementById('syncDot').style.boxShadow='0 0 6px var(--green)';
     return true;
   } catch(e){
-    console.error('Connection test exception:',e);
     document.getElementById('syncDot').style.background='#ff453a';
     showToast('⚠️ 連線異常：'+e.message);
     return false;
   }
 }
-
-// Real-time: 15s polling (replaces _sb.channel which causes DataCloneError on iOS)
-function setupRealtime() {
+function setupRealtime(){
   let lastLogTs=0,lastEvId=0,lastMemoId=0;
   setInterval(async()=>{
     try{const r=await fetch(SB+'/rest/v1/logs?select=ts&order=ts.desc&limit=1',{headers:SBH});if(r.ok){const d=await r.json();const v=d[0]?.ts||0;if(v&&v!==lastLogTs){lastLogTs=v;loadLogs();}}}catch(e){}
@@ -1420,13 +1406,29 @@ async function saveFuel(){
   const dateZh=new Date(parseInt(yr),parseInt(mo)-1,parseInt(dy)).toLocaleDateString('zh-TW');
   const tsNow=Date.now();
   const row={amount:amount,liters:liters||null,note:note||null,date:dateZh,ts:tsNow};
-  // Use sbInsert (pure fetch, same as logs/memos/events)
-  const ok=await sbInsert('fuel_logs',row);
-  if(ok){
-    closeFuelModal();
-    showToast('加油記錄已儲存 $'+amount.toLocaleString());
+  try{
+    const r=await fetch(SB+'/rest/v1/fuel_logs',{
+      method:'POST',
+      headers:{...SBH,'Prefer':'return=minimal'},
+      body:JSON.stringify(row)
+    });
+    if(!r.ok){
+      const t=await r.text();
+      let msg='';
+      try{const j=JSON.parse(t);msg=j.message||j.hint||'';}catch(e){}
+      if(msg.includes('fuel_logs')||r.status===404){
+        showToast('⚠️ 請先在 Supabase 建立 fuel_logs 表');
+      } else {
+        showToast('⚠️ 儲存失敗：'+(msg||r.status));
+      }
+      return;
+    }
+  }catch(e){
+    showToast('⚠️ 網路錯誤：'+e.message);
+    return;
   }
-  // sbInsert already logs error to console; toast shown by caller on failure
+  closeFuelModal();
+  showToast('加油記錄已儲存 $'+amount.toLocaleString());
 }
 
 // Confirm delete system
@@ -1627,7 +1629,7 @@ function swipeEnd(e,ts){
 
 function filterLog(filter,btn){document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');updateLogList(filter);}
 
-function openEditModal_old(ts){
+function openEditModal(ts){
   const log=logs.find(l=>l.ts===ts);if(!log)return;
   if(swipedItem){swipedItem.classList.remove('swiped');swipedItem=null;}
   document.getElementById('editLogTs').value=ts;
@@ -1998,7 +2000,7 @@ function addEvent(){
   document.getElementById('evTitle').value='';document.getElementById('evNote').value='';document.getElementById('evEndDate').value='';document.getElementById('evEndTime').value='';const cwrap=document.getElementById('customRemindWrap');if(cwrap)cwrap.style.display='none';
   scheduleEventNotif(ev);closeAddEventModal();showToast('排程已新增！');selectedDate=date;renderCalendar();}
 
-let _memoColor='white',_memoSize='full';
+let _memoColor='white',_memoSize='full',_editMemoColor='white';
 function openAddMemo(){
   document.getElementById('memoText').value='';
   _memoColor='white';_memoSize='full';
@@ -2009,7 +2011,8 @@ function openAddMemo(){
   document.getElementById('addMemoModal').classList.add('show');
 }
 function closeAddMemo(){document.getElementById('addMemoModal').classList.remove('show');}
-function selectMemoColor(c,el){_memoColor=c;document.querySelectorAll('.color-dot').forEach(d=>d.classList.remove('sel'));el.classList.add('sel');}
+function selectMemoColor(c,el){_memoColor=c;document.querySelectorAll('#memoColorPicker .color-dot').forEach(d=>d.classList.remove('sel'));el.classList.add('sel');}
+function selectEditMemoColor(c,el){_editMemoColor=c;document.querySelectorAll('#editMemoColorPicker .color-dot').forEach(d=>d.classList.remove('sel'));el.classList.add('sel');}
 function selectMemoSize(s,el){_memoSize=s;document.querySelectorAll('.size-opt').forEach(d=>d.classList.remove('sel'));el.classList.add('sel');}
 function addMemo(){const text=document.getElementById('memoText').value.trim();if(!text){showToast('請輸入備忘內容');return;}const now=new Date();const newMemo={who:document.getElementById('memoWho').value,text,date:now.toLocaleDateString('zh-TW'),time:now.toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'}),id:now.getTime(),color:_memoColor||'white',size:_memoSize||'full'};memos.unshift(newMemo);sbInsert('memos',{who:newMemo.who,text:newMemo.text,date:newMemo.date,time:newMemo.time,memo_id:newMemo.id,color:newMemo.color,size:newMemo.size});closeAddMemo();renderMemos(curMemoFilter);showToast('備忘已儲存！');}
 function renderMemos(filter){
@@ -2043,18 +2046,21 @@ function renderMemos(filter){
 }
 function memoCardHTML(m,wn,color,idx,total){
   const canUp=idx>0,canDown=idx<total-1;
-  return `<div class="memo-card ${color}" style="position:relative;padding-bottom:38px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-      <span class="memo-who">${wn[m.who]}</span>
+  const upC=canUp?'#999':'#ddd', dnC=canDown?'#999':'#ddd';
+  return `<div class="memo-card ${color}" style="position:relative;padding-bottom:32px">
+    <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+      <span class="memo-who">${wn[m.who]||m.who}</span>
+      <span class="memo-date">${m.date}</span>
     </div>
     <div class="memo-text">${m.text.replace(/\n/g,'<br>')}</div>
-    <div style="position:absolute;bottom:8px;left:12px;right:12px;display:flex;align-items:center;justify-content:space-between">
-      <span class="memo-date">${m.date}</span>
-      <div style="display:flex;gap:4px">
-        <button onclick="moveMemo(${m.id},-1)" ${canUp?'':'disabled'} style="border:none;background:rgba(0,0,0,0.07);color:${canUp?'#666':'#ccc'};font-size:12px;cursor:pointer;padding:4px 8px;border-radius:6px;line-height:1">↑</button>
-        <button onclick="moveMemo(${m.id},1)" ${canDown?'':'disabled'} style="border:none;background:rgba(0,0,0,0.07);color:${canDown?'#666':'#ccc'};font-size:12px;cursor:pointer;padding:4px 8px;border-radius:6px;line-height:1">↓</button>
-        <button onclick="editMemoById(${m.id})" style="border:none;background:rgba(0,0,0,0.07);color:#888;font-size:11px;cursor:pointer;padding:4px 8px;border-radius:6px;line-height:1">✎</button>
-        <button onclick="deleteMemoById(${m.id})" style="border:none;background:rgba(0,0,0,0.07);color:#888;font-size:11px;cursor:pointer;padding:4px 8px;border-radius:6px;line-height:1">✕</button>
+    <div style="position:absolute;bottom:6px;left:10px;right:10px;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <span onclick="${canUp?'moveMemo('+m.id+',-1)':''}" style="font-size:16px;color:${upC};cursor:${canUp?'pointer':'default'};padding:2px 5px;user-select:none">↑</span>
+        <span onclick="${canDown?'moveMemo('+m.id+',1)':''}" style="font-size:16px;color:${dnC};cursor:${canDown?'pointer':'default'};padding:2px 5px;user-select:none">↓</span>
+      </div>
+      <div>
+        <span onclick="editMemoById(${m.id})" style="font-size:16px;color:#aaa;cursor:pointer;padding:2px 6px;user-select:none">✎</span>
+        <span onclick="deleteMemoById(${m.id})" style="font-size:16px;color:#ccc;cursor:pointer;padding:2px 6px;user-select:none">✕</span>
       </div>
     </div>
   </div>`;
@@ -2069,15 +2075,30 @@ function deleteMemo(id){
   });
 }
 function editMemoById(id){
-  const m=memos.find(x=>x.id===id||x.id===String(id)||String(x.id)===String(id));
-  if(!m)return;
-  document.getElementById('editMemoId').value=m.id;
-  document.getElementById('editMemoText').value=m.text;
-  document.getElementById('editMemoWho').value=m.who||'A';
+  const m=memos.find(x=>String(x.id)===String(id));
+  if(!m){showToast('找不到備忘');return;}
   _editMemoColor=m.color||'white';
+  document.getElementById('editMemoId').value=String(m.id);
+  document.getElementById('editMemoText').value=m.text||'';
+  document.getElementById('editMemoWho').value=m.who||'A';
   document.querySelectorAll('#editMemoColorPicker .color-dot').forEach(d=>d.classList.remove('sel'));
   const cd=document.querySelector('#editMemoColorPicker [data-color="'+_editMemoColor+'"]');if(cd)cd.classList.add('sel');
   document.getElementById('editMemoModal').classList.add('show');
+}
+function closeEditMemo(){document.getElementById('editMemoModal').classList.remove('show');}
+function saveEditMemo(){
+  const idStr=document.getElementById('editMemoId').value;
+  const idx=memos.findIndex(x=>String(x.id)===idStr);
+  if(idx<0){showToast('找不到備忘');return;}
+  const text=document.getElementById('editMemoText').value.trim();
+  if(!text){showToast('請輸入內容');return;}
+  memos[idx].text=text;
+  memos[idx].who=document.getElementById('editMemoWho').value;
+  memos[idx].color=_editMemoColor||'white';
+  const m=memos[idx];
+  if(m._id)sbUpdate('memos','id',m._id,{text:m.text,who:m.who,color:m.color});
+  else sbUpdate('memos','memo_id',m.id,{text:m.text,who:m.who,color:m.color});
+  closeEditMemo();renderMemos(curMemoFilter);showToast('備忘已更新！');
 }
 function deleteMemoById(id){
   askDelete('確定要刪除這則備忘嗎？',()=>{
@@ -2089,14 +2110,15 @@ function deleteMemoById(id){
   });
 }
 function moveMemo(id,dir){
-  const allIds=memos.map(m=>m.id);
-  const idx=allIds.indexOf(id);
-  if(idx<0)return;
-  const newIdx=idx+dir;
-  if(newIdx<0||newIdx>=memos.length)return;
-  const tmp=memos[idx];memos[idx]=memos[newIdx];memos[newIdx]=tmp;
+  const filtered=curMemoFilter==='all'?[...memos]:memos.filter(m=>m.who===curMemoFilter);
+  const fIdx=filtered.findIndex(x=>String(x.id)===String(id));
+  if(fIdx<0)return;
+  const tIdx=fIdx+dir;if(tIdx<0||tIdx>=filtered.length)return;
+  const gFrom=memos.findIndex(x=>String(x.id)===String(filtered[fIdx].id));
+  const gTo=memos.findIndex(x=>String(x.id)===String(filtered[tIdx].id));
+  if(gFrom<0||gTo<0)return;
+  [memos[gFrom],memos[gTo]]=[memos[gTo],memos[gFrom]];
   renderMemos(curMemoFilter);
-  showToast(dir<0?'往上移':'往下移');
 }
 function filterMemo(filter,btn){document.querySelectorAll('#page-memo .filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderMemos(filter);}
 
@@ -2461,14 +2483,7 @@ initData().then(()=>{
   if(notifGranted) events.forEach(scheduleEventNotif);
 });
 
-function openEditModal(ts){
-  const log=logs.find(l=>l.ts===ts);if(!log)return;
-  document.getElementById('editLogTs').value=ts;
-  document.getElementById('editDate').value=log.date;
-  document.getElementById('editTime').value=log.time;
-  document.getElementById('editDetail').value=log.detail||'';
-  document.getElementById('editModal').classList.add('show');
-}
+
 function closeEditModal(){document.getElementById('editModal').classList.remove('show');}
 function saveEditLog(){
   const ts=parseInt(document.getElementById('editLogTs').value);
