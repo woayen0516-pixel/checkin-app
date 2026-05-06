@@ -1,15 +1,16 @@
 {
   "name": "打卡系統",
   "short_name": "打卡",
-  "description": "帥哥宗彥與胖胖誓恩打卡管理系統",
-  "start_url": "/",
+  "description": "師哥宗彥與胖胖嘗恩打卡管理系統",
+  "start_url": "./app.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#0a0a0a",
   "theme_color": "#0a0a0a",
   "orientation": "portrait",
   "icons": [
-    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ],
   "categories": ["productivity", "business"],
   "lang": "zh-TW"
