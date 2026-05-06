@@ -1174,31 +1174,23 @@ async function sbInsert(table,row){
 async function sbDelete(table, col, val) {
   try {
     const r=await fetch(SB+'/rest/v1/'+table+'?'+col+'=eq.'+encodeURIComponent(val),{method:'DELETE',headers:SBH});
-    if(!r.ok){const t=await r.text();console.error('sbDelete error',table,r.status,t);return false;}
+    if(!r.ok){const t=await r.text();console.error('sbDelete',table,r.status,t);return false;}
     return true;
-  } catch(e){console.error('sbDelete exception',e);return false;}
+  } catch(e){console.error('sbDelete',e);return false;}
 }
 async function sbUpdate(table, col, val, row) {
   try {
     const r=await fetch(SB+'/rest/v1/'+table+'?'+col+'=eq.'+encodeURIComponent(val),{method:'PATCH',headers:{...SBH,'Prefer':'return=minimal'},body:JSON.stringify(row)});
-    if(!r.ok){const t=await r.text();console.error('sbUpdate error',table,r.status,t);return false;}
+    if(!r.ok){const t=await r.text();console.error('sbUpdate',table,r.status,t);return false;}
     return true;
-  } catch(e){console.error('sbUpdate exception',e);return false;}
+  } catch(e){console.error('sbUpdate',e);return false;}
 }
-
-async function testConnection() {
-  try {
+async function testConnection(){
+  try{
     const r=await fetch(SB+'/rest/v1/logs?select=id&limit=1',{headers:SBH});
     if(!r.ok){document.getElementById('syncDot').style.background='#ff453a';showToast('⚠️ 連線失敗 '+r.status);return false;}
-    _sbReady=true;
-    document.getElementById('syncDot').style.background='var(--green)';
-    document.getElementById('syncDot').style.boxShadow='0 0 6px var(--green)';
-    return true;
-  } catch(e){
-    document.getElementById('syncDot').style.background='#ff453a';
-    showToast('⚠️ 連線異常：'+e.message);
-    return false;
-  }
+    _sbReady=true;document.getElementById('syncDot').style.background='var(--green)';document.getElementById('syncDot').style.boxShadow='0 0 6px var(--green)';return true;
+  }catch(e){document.getElementById('syncDot').style.background='#ff453a';showToast('⚠️ 連線異常：'+e.message);return false;}
 }
 function setupRealtime(){
   let lastLogTs=0,lastEvId=0,lastMemoId=0;
@@ -1404,31 +1396,12 @@ async function saveFuel(){
   const dateVal=document.getElementById('fuelDate').value;
   const[yr,mo,dy]=dateVal.split('-');
   const dateZh=new Date(parseInt(yr),parseInt(mo)-1,parseInt(dy)).toLocaleDateString('zh-TW');
-  const tsNow=Date.now();
-  const row={amount:amount,liters:liters||null,note:note||null,date:dateZh,ts:tsNow};
+  const row={amount:amount,liters:liters||null,note:note||null,date:dateZh,ts:Date.now()};
   try{
-    const r=await fetch(SB+'/rest/v1/fuel_logs',{
-      method:'POST',
-      headers:{...SBH,'Prefer':'return=minimal'},
-      body:JSON.stringify(row)
-    });
-    if(!r.ok){
-      const t=await r.text();
-      let msg='';
-      try{const j=JSON.parse(t);msg=j.message||j.hint||'';}catch(e){}
-      if(msg.includes('fuel_logs')||r.status===404){
-        showToast('⚠️ 請先在 Supabase 建立 fuel_logs 表');
-      } else {
-        showToast('⚠️ 儲存失敗：'+(msg||r.status));
-      }
-      return;
-    }
-  }catch(e){
-    showToast('⚠️ 網路錯誤：'+e.message);
-    return;
-  }
-  closeFuelModal();
-  showToast('加油記錄已儲存 $'+amount.toLocaleString());
+    const r=await fetch(SB+'/rest/v1/fuel_logs',{method:'POST',headers:{...SBH,'Prefer':'return=minimal'},body:JSON.stringify(row)});
+    if(!r.ok){const t=await r.text();let msg=r.status+'';try{const j=JSON.parse(t);msg=j.message||j.hint||msg;}catch(e){}showToast('⚠️ 儲存失敗：'+msg);return;}
+  }catch(e){showToast('⚠️ 網路錯誤：'+e.message);return;}
+  closeFuelModal();showToast('加油記錄已儲存 $'+amount.toLocaleString());
 }
 
 // Confirm delete system
@@ -2004,8 +1977,8 @@ let _memoColor='white',_memoSize='full',_editMemoColor='white';
 function openAddMemo(){
   document.getElementById('memoText').value='';
   _memoColor='white';_memoSize='full';
-  document.querySelectorAll('.color-dot').forEach(d=>d.classList.remove('sel'));
-  const wd=document.querySelector('.color-dot[data-color="white"]');if(wd)wd.classList.add('sel');
+  document.querySelectorAll('#memoColorPicker .color-dot').forEach(d=>d.classList.remove('sel'));
+  const wd=document.querySelector('#memoColorPicker .color-dot[data-color="white"]');if(wd)wd.classList.add('sel');
   document.querySelectorAll('.size-opt').forEach(d=>d.classList.remove('sel'));
   const sf=document.getElementById('size-full');if(sf)sf.classList.add('sel');
   document.getElementById('addMemoModal').classList.add('show');
@@ -2014,7 +1987,14 @@ function closeAddMemo(){document.getElementById('addMemoModal').classList.remove
 function selectMemoColor(c,el){_memoColor=c;document.querySelectorAll('#memoColorPicker .color-dot').forEach(d=>d.classList.remove('sel'));el.classList.add('sel');}
 function selectEditMemoColor(c,el){_editMemoColor=c;document.querySelectorAll('#editMemoColorPicker .color-dot').forEach(d=>d.classList.remove('sel'));el.classList.add('sel');}
 function selectMemoSize(s,el){_memoSize=s;document.querySelectorAll('.size-opt').forEach(d=>d.classList.remove('sel'));el.classList.add('sel');}
-function addMemo(){const text=document.getElementById('memoText').value.trim();if(!text){showToast('請輸入備忘內容');return;}const now=new Date();const newMemo={who:document.getElementById('memoWho').value,text,date:now.toLocaleDateString('zh-TW'),time:now.toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'}),id:now.getTime(),color:_memoColor||'white',size:_memoSize||'full'};memos.unshift(newMemo);sbInsert('memos',{who:newMemo.who,text:newMemo.text,date:newMemo.date,time:newMemo.time,memo_id:newMemo.id,color:newMemo.color,size:newMemo.size});closeAddMemo();renderMemos(curMemoFilter);showToast('備忘已儲存！');}
+function addMemo(){
+  const text=document.getElementById('memoText').value.trim();if(!text){showToast('請輸入備忘內容');return;}
+  const now=new Date();
+  const m={who:document.getElementById('memoWho').value,text,date:now.toLocaleDateString('zh-TW'),time:now.toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'}),id:now.getTime(),color:_memoColor||'white',size:_memoSize||'full'};
+  memos.unshift(m);
+  sbInsert('memos',{who:m.who,text:m.text,date:m.date,time:m.time,memo_id:m.id,color:m.color,size:m.size});
+  closeAddMemo();renderMemos(curMemoFilter);showToast('備忘已儲存！');
+}
 function renderMemos(filter){
   curMemoFilter=filter;
   const el=document.getElementById('memoList');
@@ -2046,7 +2026,7 @@ function renderMemos(filter){
 }
 function memoCardHTML(m,wn,color,idx,total){
   const canUp=idx>0,canDown=idx<total-1;
-  const upC=canUp?'#999':'#ddd', dnC=canDown?'#999':'#ddd';
+  const upC=canUp?'#999':'#ddd',dnC=canDown?'#999':'#ddd';
   return `<div class="memo-card ${color}" style="position:relative;padding-bottom:32px">
     <div style="display:flex;justify-content:space-between;margin-bottom:8px">
       <span class="memo-who">${wn[m.who]||m.who}</span>
@@ -2067,11 +2047,10 @@ function memoCardHTML(m,wn,color,idx,total){
 }
 function deleteMemo(id){
   askDelete('確定要刪除這則備忘嗎？',()=>{
-    const m=memos.find(m=>m.id===id);
-    if(m&&m._id)sbDelete('memos','id',m._id);else sbDelete('memos','memo_id',id);
-    memos=memos.filter(m=>m.id!==id);
-    renderMemos(curMemoFilter);
-    showToast('備忘已刪除');
+    const m=memos.find(x=>String(x.id)===String(id));
+    if(m&&m._id)sbDelete('memos','id',m._id);else if(m)sbDelete('memos','memo_id',m.id);
+    memos=memos.filter(x=>String(x.id)!==String(id));
+    renderMemos(curMemoFilter);showToast('備忘已刪除');
   });
 }
 function editMemoById(id){
@@ -2092,27 +2071,16 @@ function saveEditMemo(){
   if(idx<0){showToast('找不到備忘');return;}
   const text=document.getElementById('editMemoText').value.trim();
   if(!text){showToast('請輸入內容');return;}
-  memos[idx].text=text;
-  memos[idx].who=document.getElementById('editMemoWho').value;
-  memos[idx].color=_editMemoColor||'white';
+  memos[idx].text=text;memos[idx].who=document.getElementById('editMemoWho').value;memos[idx].color=_editMemoColor||'white';
   const m=memos[idx];
   if(m._id)sbUpdate('memos','id',m._id,{text:m.text,who:m.who,color:m.color});
   else sbUpdate('memos','memo_id',m.id,{text:m.text,who:m.who,color:m.color});
   closeEditMemo();renderMemos(curMemoFilter);showToast('備忘已更新！');
 }
-function deleteMemoById(id){
-  askDelete('確定要刪除這則備忘嗎？',()=>{
-    const m=memos.find(x=>String(x.id)===String(id));
-    if(m&&m._id)sbDelete('memos','id',m._id);
-    else if(m)sbDelete('memos','memo_id',m.id);
-    memos=memos.filter(x=>String(x.id)!==String(id));
-    renderMemos(curMemoFilter);showToast('備忘已刪除');
-  });
-}
+function deleteMemoById(id){deleteMemo(id);}
 function moveMemo(id,dir){
   const filtered=curMemoFilter==='all'?[...memos]:memos.filter(m=>m.who===curMemoFilter);
-  const fIdx=filtered.findIndex(x=>String(x.id)===String(id));
-  if(fIdx<0)return;
+  const fIdx=filtered.findIndex(x=>String(x.id)===String(id));if(fIdx<0)return;
   const tIdx=fIdx+dir;if(tIdx<0||tIdx>=filtered.length)return;
   const gFrom=memos.findIndex(x=>String(x.id)===String(filtered[fIdx].id));
   const gTo=memos.findIndex(x=>String(x.id)===String(filtered[tIdx].id));
