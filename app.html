@@ -127,6 +127,14 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--fi);
 
 /* ── TASK PILLS ── */
 .task-pills{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px}
+.type-tab{
+  padding:10px 20px;background:none;border:none;
+  font-size:16px;font-weight:500;color:var(--g3);
+  cursor:pointer;font-family:var(--fi);transition:all 0.15s;
+  position:relative;white-space:nowrap;
+}
+.type-tab.active{color:var(--w);font-weight:800;font-size:18px;}
+.type-tab.active::after{content:'';position:absolute;bottom:-1.5px;left:0;right:0;height:2.5px;background:var(--w);border-radius:2px;}
 .task-pill{
   padding:8px 15px;border-radius:100px;border:1.5px solid var(--g1);
   background:var(--s3);font-size:13px;font-weight:500;color:var(--g4);
@@ -231,8 +239,8 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--fi);
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
 .cal-day{
   aspect-ratio:1;border-radius:50%;
-  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
-  padding:5px 2px 3px;background:transparent;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:2px;background:transparent;
   position:relative;overflow:visible;cursor:pointer;border:none;
 }
 .cal-day.today{background:#111}
@@ -241,7 +249,7 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--fi);
 .cal-day.other .cal-dn{color:#bbb !important;font-weight:400}
 .cal-day.other .cal-bars{opacity:0.3}
 .cal-day:active{background:rgba(0,0,0,0.1)}
-.cal-dn,.cal-num{font-size:11px;color:#555;font-family:var(--fi);font-weight:500;position:relative;z-index:1;line-height:1}
+.cal-dn,.cal-num{font-size:11px;color:#555;font-family:var(--fi);font-weight:500;position:relative;z-index:1;line-height:1;text-align:center;display:block;width:100%}
 .cal-day.today .cal-dn{color:#ffffff !important;font-weight:700}
 .cal-day.selected .cal-dn{color:#d97706;font-weight:700}
 .cal-bars{display:flex;flex-direction:column;gap:2px;margin-top:2px}
@@ -253,10 +261,7 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--fi);
 .ev-green{background:#7bc67e}.ev-blue{background:#4a9eff}.ev-orange{background:#ff9f45}
 .ev-pink{background:#f48fb1}.ev-purple{background:#b39ddb}.ev-white{background:#666}
 
-.cal-legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
-.leg-item{display:flex;align-items:center;gap:4px}
-.leg-dot{width:6px;height:6px;border-radius:50%}
-.leg-txt{font-size:8px;color:#777;font-family:var(--mono)}
+
 
 .ev-panel{margin-top:12px;background:rgba(0,0,0,0.06);border-radius:var(--r-sm);padding:12px}
 .ev-panel-title{font-size:12px;color:#888;margin-bottom:10px;font-family:var(--mono);font-weight:600}
@@ -266,7 +271,7 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--fi);
 .ev-body{flex:1;min-width:0}
 .ev-title-d{font-size:13px;color:#111;font-weight:600;margin-bottom:3px}
 .ev-meta-d{font-size:10px;color:#888;font-family:var(--mono)}
-.ev-del{border:none;background:none;color:#bbb;font-size:18px;cursor:pointer;padding:0 4px;line-height:1;flex-shrink:0}
+.ev-del,.event-del{border:none;background:var(--red-bg);color:var(--red);font-size:14px;font-weight:600;cursor:pointer;padding:6px 12px;line-height:1;flex-shrink:0;border-radius:var(--r-xs);}
 
 /* Calendar add form */
 .cal-add-form{margin-top:12px;background:var(--cal-s1);border-radius:var(--r-sm);padding:14px}
@@ -514,24 +519,30 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--fi);
   </div>
 
   <div class="action-card">
-    <div class="action-top">
-      <div class="action-av" id="actionAv">🐸</div>
-      <div>
-        <div class="action-name" id="actionName">Yen</div>
-        <div class="action-sub" id="actionSub">今日未打卡</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="action-av" id="actionAv">🐸</div>
+        <div>
+          <div class="action-name" id="actionName">Yen</div>
+          <div class="action-sub" id="actionSub">今日未打卡</div>
+        </div>
       </div>
+      <!-- 4N fuel button top-right -->
+      <button id="fuelBtn" onclick="openFuelModal()" style="display:none;width:48px;height:48px;background:var(--s3);border:none;border-radius:14px;cursor:pointer;align-items:center;justify-content:center;flex-shrink:0"><span style="font-size:22px;line-height:1;display:block">⛽</span></button>
     </div>
 
-    <!-- Yen section -->
+    <!-- Yen: horizontal scroll type selector -->
     <div id="secA">
-      <div class="sec-label">執行項目</div>
-      <div class="task-pills" id="yenTypePills">
-        <button class="task-pill" id="type-拍攝" onclick="selectYenType('拍攝')">🎬 拍攝</button>
-        <button class="task-pill" id="type-剪輯" onclick="selectYenType('剪輯')">✂️ 剪輯</button>
-        <button class="task-pill" id="type-設計" onclick="selectYenType('設計')">🎨 設計</button>
-        <button class="task-pill" id="type-其他" onclick="selectYenType('其他')">📋 其他</button>
+      <div class="sec-label" style="margin-bottom:6px">執行項目</div>
+      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-bottom:14px">
+        <div style="display:flex;gap:0;min-width:max-content;border-bottom:1.5px solid var(--g1)">
+          <button class="type-tab" id="type-拍攝" onclick="selectYenType('拍攝')">拍攝</button>
+          <button class="type-tab" id="type-剪輯" onclick="selectYenType('剪輯')">剪輯</button>
+          <button class="type-tab" id="type-設計" onclick="selectYenType('設計')">設計</button>
+          <button class="type-tab" id="type-其他" onclick="selectYenType('其他')">其他</button>
+        </div>
       </div>
-      <div class="sec-label">客戶 / 專案</div>
+      <div class="sec-label" style="margin-bottom:6px">客戶 / 專案</div>
       <div class="task-pills" id="yenClientPills">
         <button class="task-pill" id="client-馬赫" onclick="selectYenClient('馬赫')">馬赫</button>
         <button class="task-pill" id="client-生活藝術" onclick="selectYenClient('生活藝術')">生活藝術</button>
@@ -539,42 +550,47 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--fi);
         <button class="task-pill" id="client-前鋒美語" onclick="selectYenClient('前鋒美語')">前鋒美語</button>
         <button class="task-pill" id="client-新增" onclick="showNewClientInput()">＋ 新增</button>
       </div>
-      <div id="newClientInput" style="display:none;margin-top:8px;display:none">
+      <div id="newClientInput" style="display:none;margin-top:8px">
         <input class="form-input" type="text" id="newClientName" placeholder="輸入客戶名稱" style="margin-bottom:8px">
         <button onclick="addNewClient()" style="background:var(--w);color:#fff;border:none;border-radius:var(--r-xs);padding:9px 18px;font-size:13px;font-family:var(--fi);font-weight:600;cursor:pointer">新增</button>
       </div>
     </div>
 
-    <!-- 4N section -->
+    <!-- 4N: minimal km line input -->
     <div id="secB" style="display:none">
       <div id="bCheckInFields">
-        <div class="form-group" style="margin-bottom:0">
-          <label class="form-label">起始里程 km</label>
-          <input class="form-input" type="number" id="kmStart" placeholder="0" inputmode="numeric">
+        <div style="margin-bottom:4px">
+          <div style="font-size:11px;color:var(--g3);letter-spacing:0.08em;font-family:var(--mono);margin-bottom:6px">起始里程 KM</div>
+          <input type="number" id="kmStart" placeholder="0" inputmode="numeric"
+            style="border:none;border-bottom:1.5px solid var(--g2);background:transparent;font-size:28px;font-weight:700;color:var(--w);width:100%;outline:none;padding:4px 0;font-family:var(--fi)">
         </div>
       </div>
       <div id="bAmtSec" style="display:none">
-        <div class="amount-lbl">今日 Uber 結算</div>
-        <div class="amount-wrap"><span class="amount-prefix">$</span><input type="number" class="amount-input" id="carAmount" placeholder="0" min="0" inputmode="numeric" oninput="updateAmtPreview()"></div>
-        <div class="form-row" style="gap:8px;margin-bottom:12px">
-          <div class="form-group" style="margin:0">
-            <label class="form-label">接單趟數</label>
-            <input class="form-input" type="number" id="tripCount" placeholder="0" inputmode="numeric" oninput="updateAmtPreview()">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:12px">
+          <div>
+            <div style="font-size:11px;color:var(--g3);letter-spacing:0.08em;font-family:var(--mono);margin-bottom:6px">今日收入</div>
+            <div style="display:flex;align-items:baseline;gap:3px;border-bottom:1.5px solid var(--g2);padding-bottom:4px">
+              <span style="font-size:16px;color:var(--g3)">$</span>
+              <input type="number" id="carAmount" placeholder="0" min="0" inputmode="numeric" oninput="updateAmtPreview()"
+                style="border:none;background:transparent;font-size:28px;font-weight:700;color:var(--w);width:100%;outline:none;font-family:var(--fi)">
+            </div>
           </div>
-          <div class="form-group" style="margin:0">
-            <label class="form-label">結束里程 km</label>
-            <input class="form-input" type="number" id="kmEnd" placeholder="0" inputmode="numeric">
+          <div>
+            <div style="font-size:11px;color:var(--g3);letter-spacing:0.08em;font-family:var(--mono);margin-bottom:6px">接單趟數</div>
+            <input type="number" id="tripCount" placeholder="0" inputmode="numeric" oninput="updateAmtPreview()"
+              style="border:none;border-bottom:1.5px solid var(--g2);background:transparent;font-size:28px;font-weight:700;color:var(--w);width:100%;outline:none;padding:4px 0;font-family:var(--fi)">
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--g3);letter-spacing:0.08em;font-family:var(--mono);margin-bottom:6px">結束里程 KM</div>
+            <input type="number" id="kmEnd" placeholder="0" inputmode="numeric"
+              style="border:none;border-bottom:1.5px solid var(--g2);background:transparent;font-size:28px;font-weight:700;color:var(--w);width:100%;outline:none;padding:4px 0;font-family:var(--fi)">
+          </div>
+          <div id="amtPreviewInline" style="display:none">
+            <div style="font-size:11px;color:var(--yellow);letter-spacing:0.08em;font-family:var(--mono);margin-bottom:6px">預覽</div>
+            <div style="font-size:14px;font-weight:700;color:var(--yellow)" id="amtVal">$0</div>
+            <div style="font-size:11px;color:var(--g3)" id="tripVal">0趟</div>
           </div>
         </div>
-        <div class="amt-preview" id="amtPreview">
-          <div><div style="font-size:9px;color:var(--yellow);letter-spacing:0.1em;text-transform:uppercase;font-family:var(--mono)">今日收入</div><div style="font-family:var(--fi);font-size:26px;font-weight:800;color:var(--yellow)" id="amtVal">$0</div></div>
-          <div style="text-align:right"><div style="font-size:9px;color:var(--g3);letter-spacing:0.1em;text-transform:uppercase;font-family:var(--mono)">趟數</div><div style="font-family:var(--fi);font-size:26px;font-weight:800;color:var(--g4)" id="tripVal">0</div></div>
-        </div>
-      </div>
-      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--g1)">
-        <button onclick="openFuelModal()" style="width:100%;padding:12px;background:var(--s3);border:1.5px solid var(--g1);border-radius:var(--r-sm);color:var(--g4);font-size:13px;font-family:var(--fi);font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
-          <span>⛽</span><span>記錄加油</span>
-        </button>
       </div>
     </div>
 
@@ -637,11 +653,7 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--fi);
   <div class="cal-divider"></div>
   <div class="cal-grid-labels" id="calLabels"></div>
   <div class="cal-grid" id="calGrid"></div>
-  <div class="cal-legend">
-    <div class="leg-item"><div class="leg-dot" style="background:#7bc67e"></div><div class="leg-txt">Yen</div></div>
-    <div class="leg-item"><div class="leg-dot" style="background:#4a9eff"></div><div class="leg-txt">4N</div></div>
-    <div class="leg-item"><div class="leg-dot" style="background:#ff9f45"></div><div class="leg-txt">兩人</div></div>
-  </div>
+
   <div class="ev-panel" id="evPanel">
     <div class="ev-panel-title" id="dayTitle"></div>
     <div id="dayEvents"></div>
@@ -757,51 +769,39 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--fi);
 <div class="page-pad">
   <div class="sec-h">報表</div>
 
-  <!-- Member folder tabs -->
-  <div style="display:flex;gap:0;margin-bottom:0">
-    <div id="rtab-yen" onclick="setReportTab('yen')" style="
-      flex:1;padding:14px 16px 20px;cursor:pointer;
-      background:#111;border-radius:16px 0 0 0;
-      display:flex;align-items:center;gap:10px;
-      transition:all 0.2s;
-    ">
-      <span style="font-size:22px">🐸</span>
-      <span style="font-size:16px;font-weight:800;color:#fff;letter-spacing:0.04em">YEN</span>
+  <!-- Member tabs - pill style -->
+  <div style="background:#fff;border-radius:20px;box-shadow:0 4px 24px rgba(0,0,0,0.09);margin-bottom:14px;overflow:hidden">
+    <div style="display:flex">
+      <div id="rtab-yen" onclick="setReportTab('yen')" style="
+        flex:1;padding:14px 8px;cursor:pointer;
+        background:#fff;border-bottom:none;
+        display:flex;align-items:center;justify-content:center;gap:8px;
+        transition:all 0.2s;
+      ">
+        <span style="font-size:18px">🐸</span>
+        <span id="rtab-yen-label" style="font-size:14px;font-weight:800;color:#111;letter-spacing:0.04em">YEN</span>
+      </div>
+      <div id="rtab-4n" onclick="setReportTab('4n')" style="
+        flex:1;padding:14px 8px;cursor:pointer;
+        background:#e8e8e8;border-bottom:none;
+        display:flex;align-items:center;justify-content:center;gap:8px;
+        transition:all 0.2s;
+      ">
+        <span style="font-size:18px">🐵</span>
+        <span id="rtab-4n-label" style="font-size:14px;font-weight:800;color:#888;letter-spacing:0.04em">4N</span>
+      </div>
     </div>
-    <div id="rtab-4n" onclick="setReportTab('4n')" style="
-      flex:1;padding:14px 16px 20px;cursor:pointer;
-      background:#fff;border-radius:0 16px 0 0;
-      border:1.5px solid var(--g1);border-left:none;border-bottom:none;
-      display:flex;align-items:center;gap:10px;
-      transition:all 0.2s;
-    ">
-      <span style="font-size:22px">🐵</span>
-      <span id="rtab-4n-label" style="font-size:16px;font-weight:800;color:var(--g3);letter-spacing:0.04em">4N</span>
+    <div style="display:flex;align-items:center;justify-content:center;gap:24px;padding:10px 16px 14px">
+      <button onclick="cycleRange(-1)" style="background:none;border:none;font-size:22px;color:var(--g3);cursor:pointer;padding:4px 10px;line-height:1">‹</button>
+      <span id="rng-label" style="font-size:14px;font-weight:700;color:var(--w);min-width:60px;text-align:center">本月</span>
+      <button onclick="cycleRange(1)" style="background:none;border:none;font-size:22px;color:var(--g3);cursor:pointer;padding:4px 10px;line-height:1">›</button>
     </div>
-  </div>
-  <!-- Tab content white box -->
-  <div id="reportTabContent" style="background:#fff;border:1.5px solid var(--g1);border-top:none;border-radius:0 0 16px 16px;padding:16px;margin-bottom:12px;box-shadow:var(--shadow)">
-  <!-- Range inside box -->
-  <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:16px">
-    <button onclick="setReportRange('week')" id="rng-week" style="background:none;border:none;font-size:13px;font-weight:600;color:var(--g3);font-family:var(--fi);cursor:pointer;padding:4px 8px">本週</button>
-    <div id="rng-month-display" style="display:flex;align-items:center;gap:8px">
-      <span style="color:var(--g2);font-size:14px;cursor:pointer" onclick="setReportRange('week')">‹</span>
-      <span id="rng-label" style="font-size:15px;font-weight:700;color:var(--w)">本月</span>
-      <span style="color:var(--g2);font-size:14px;cursor:pointer" onclick="setReportRange('all')">›</span>
-    </div>
-    <button onclick="setReportRange('all')" id="rng-all" style="background:none;border:none;font-size:13px;font-weight:600;color:var(--g3);font-family:var(--fi);cursor:pointer;padding:4px 8px">全部</button>
-  </div>
+    <div style="padding:0 14px 14px">
   <input type="hidden" id="reportRange" value="month">
 
   <input type="hidden" id="reportRange" value="month">
   <input type="hidden" id="reportTab" value="yen">
 
-  <!-- Range inside white box -->
-  <div class="rng-row" style="margin-bottom:14px">
-    <button class="rng-btn" id="rng-week" onclick="setReportRange('week')">本週</button>
-    <button class="rng-btn active" id="rng-month" onclick="setReportRange('month')">本月</button>
-    <button class="rng-btn" id="rng-all" onclick="setReportRange('all')">全部</button>
-  </div>
 
   <!-- YEN panel -->
   <div id="panel-yen">
@@ -855,9 +855,17 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--fi);
       <div id="fourNWeekBars" style="display:flex;gap:6px;align-items:flex-end;height:60px;margin-bottom:6px"></div>
       <div id="fourNSection"><div style="font-size:12px;color:var(--g3)">尚無資料</div></div>
     </div>
+
+    <!-- Fuel log section -->
+    <div class="report-section" style="margin-top:10px">
+      <div class="report-section-title">⛽ 加油紀錄</div>
+      <div id="fuelSection"><div style="font-size:12px;color:var(--g3)">載入中...</div></div>
+    </div>
+
   </div>
 
-  </div><!-- end tab content -->
+    </div><!-- end inner padding -->
+  </div><!-- end unified card -->
 
   <!-- Raw data -->
   <div class="report-section" style="overflow-x:auto;margin-top:8px">
@@ -906,6 +914,47 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--fi);
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- Memo context menu -->
+<div id="memoMenu" style="display:none;position:fixed;background:#fff;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.15);padding:8px;z-index:600;min-width:160px;overflow:hidden">
+  <div onclick="editMemo()" style="padding:13px 18px;font-size:15px;font-weight:500;cursor:pointer;color:#111;display:flex;align-items:center;gap:10px">
+    <span>✎</span><span>編輯</span>
+  </div>
+  <div style="height:0.5px;background:var(--g1);margin:0 8px"></div>
+  <div onclick="deleteMemoFromMenu()" style="padding:13px 18px;font-size:15px;font-weight:500;cursor:pointer;color:var(--red);display:flex;align-items:center;gap:10px">
+    <span>🗑</span><span>刪除</span>
+  </div>
+</div>
+<div id="memoMenuDim" onclick="closeMemoMenu()" style="display:none;position:fixed;inset:0;z-index:599"></div>
+
+<!-- Edit Memo Modal -->
+<div class="modal-overlay" id="editMemoModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">編輯備忘</div>
+    <input type="hidden" id="editMemoId">
+    <div class="form-group"><label class="form-label">誰的</label>
+      <select class="form-input" id="editMemoWho"><option value="A">Yen 🐸</option><option value="B">4N 🐵</option></select>
+    </div>
+    <div class="form-group"><label class="form-label">顏色</label>
+      <div class="memo-color-picker" id="editMemoColorPicker">
+        <div class="color-dot sel" data-color="white" style="background:#fff;border:1.5px solid #ddd" onclick="selectEditMemoColor('white',this)"></div>
+        <div class="color-dot" data-color="yellow" style="background:#fff3b0" onclick="selectEditMemoColor('yellow',this)"></div>
+        <div class="color-dot" data-color="blue" style="background:#deeeff" onclick="selectEditMemoColor('blue',this)"></div>
+        <div class="color-dot" data-color="pink" style="background:#ffe4ec" onclick="selectEditMemoColor('pink',this)"></div>
+        <div class="color-dot" data-color="green" style="background:#ddf5e8" onclick="selectEditMemoColor('green',this)"></div>
+        <div class="color-dot" data-color="orange" style="background:#ffe8d6" onclick="selectEditMemoColor('orange',this)"></div>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">內容</label>
+      <textarea class="memo-textarea" id="editMemoText"></textarea>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:6px">
+      <button class="cancel-btn" onclick="closeEditMemo()">取消</button>
+      <button class="confirm-btn" onclick="saveEditMemo()">儲存</button>
+    </div>
+  </div>
+</div>
 
 <!-- Cheer -->
 <div class="cheer-overlay" id="cheerOverlay">
@@ -1098,79 +1147,80 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--fi);
 const _SB_URL = 'https://zoabvuslsztfyhhllfvo.supabase.co';
 const _SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpvYWJ2dXNsc3p0ZnloaGxsZnZvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Nzk2MTE3OCwiZXhwIjoyMDkzNTM3MTc4fQ.dGeD9zbUsZxBrkfJmIHm80eiA3XoNlOI850wldhzgv4';
 const _sb = supabase.createClient(_SB_URL, _SB_KEY);
+const SB=_SB_URL;
+const SBH={'apikey':_SB_KEY,'Authorization':'Bearer '+_SB_KEY,'Content-Type':'application/json'};
 
 // ── Supabase helpers ──────────────────────────────────────────────
 let _sbReady = false;
 
-async function sbFetch(table) {
-  try {
-    const { data, error } = await _sb.from(table).select('*').order('created_at', { ascending: true });
-    if (error) { console.error('sbFetch error', table, error.message); return []; }
-    return data || [];
-  } catch(e) { console.error('sbFetch exception', table, e); return []; }
+async function sbFetch(table,select='*',orderCol='',orderDir='desc',limit=1000){
+  try{
+    let url=SB+'/rest/v1/'+table+'?select='+select;
+    if(orderCol)url+='&order='+orderCol+'.'+orderDir;
+    if(limit<1000)url+='&limit='+limit;
+    const r=await fetch(url,{headers:SBH});
+    if(!r.ok)return[];
+    return await r.json();
+  }catch(e){return[];}
 }
-async function sbInsert(table, row) {
-  try {
-    const { error } = await _sb.from(table).insert([row]);
-    if (error) { console.error('sbInsert error', table, error.message); showToast('⚠️ 儲存失敗：' + error.message); return false; }
-    return true;
-  } catch(e) { console.error('sbInsert exception', e); showToast('⚠️ 網路錯誤，請重試'); return false; }
+async function sbInsert(table,row){
+  try{
+    const r=await fetch(SB+'/rest/v1/'+table,{method:'POST',headers:{...SBH,'Prefer':'return=representation'},body:JSON.stringify(row)});
+    const t=await r.text();
+    if(!r.ok){
+      console.error('sbInsert error',table,r.status,t);
+      let msg=r.status+'';
+      try{const j=JSON.parse(t);msg=j.message||j.hint||j.details||msg;}catch(e){}
+      showToast('⚠️ '+table+' 儲存失敗：'+msg);
+      return false;
+    }
+    try{return JSON.parse(t);}catch(e){return true;}
+  }catch(e){
+    console.error('sbInsert error',table,e);
+    showToast('⚠️ 網路錯誤：'+e.message);
+    return false;
+  }
 }
 async function sbDelete(table, col, val) {
   try {
-    const { error } = await _sb.from(table).delete().eq(col, val);
-    if (error) { console.error('sbDelete error', table, error.message); return false; }
+    const r=await fetch(SB+'/rest/v1/'+table+'?'+col+'=eq.'+encodeURIComponent(val),{method:'DELETE',headers:SBH});
+    if(!r.ok){const t=await r.text();console.error('sbDelete error',table,r.status,t);return false;}
     return true;
-  } catch(e) { console.error('sbDelete exception', e); return false; }
+  } catch(e){console.error('sbDelete exception',e);return false;}
 }
 async function sbUpdate(table, col, val, row) {
   try {
-    const { error } = await _sb.from(table).update(row).eq(col, val);
-    if (error) { console.error('sbUpdate error', table, error.message); return false; }
+    const r=await fetch(SB+'/rest/v1/'+table+'?'+col+'=eq.'+encodeURIComponent(val),{method:'PATCH',headers:{...SBH,'Prefer':'return=minimal'},body:JSON.stringify(row)});
+    if(!r.ok){const t=await r.text();console.error('sbUpdate error',table,r.status,t);return false;}
     return true;
-  } catch(e) { console.error('sbUpdate exception', e); return false; }
+  } catch(e){console.error('sbUpdate exception',e);return false;}
 }
 
-// Connection test
+// Connection test — pure fetch only (no _sb client, avoids DataCloneError on iOS Safari)
 async function testConnection() {
   try {
-    // Use a simple insert test to check write permission
-    const { data, error } = await _sb.from('logs').select('id').limit(1);
-    if (error) {
-      console.error('Connection test failed:', error.message, error.code, error.hint);
-      document.getElementById('syncDot').style.background = '#ff453a';
-      showToast('⚠️ ' + error.code + ': ' + error.message);
-      return false;
-    }
-    _sbReady = true;
-    document.getElementById('syncDot').style.background = 'var(--green)';
-    document.getElementById('syncDot').style.boxShadow = '0 0 6px var(--green)';
+    const r=await fetch(SB+'/rest/v1/logs?select=id&limit=1',{headers:SBH});
+    if(!r.ok){document.getElementById('syncDot').style.background='#ff453a';showToast('⚠️ 連線失敗 '+r.status);return false;}
+    _sbReady=true;
+    document.getElementById('syncDot').style.background='var(--green)';
+    document.getElementById('syncDot').style.boxShadow='0 0 6px var(--green)';
     return true;
-  } catch(e) {
-    console.error('Connection test exception:', e);
-    document.getElementById('syncDot').style.background = '#ff453a';
-    showToast('⚠️ 連線異常：' + e.message);
+  } catch(e){
+    console.error('Connection test exception:',e);
+    document.getElementById('syncDot').style.background='#ff453a';
+    showToast('⚠️ 連線異常：'+e.message);
     return false;
   }
 }
 
-// ── Real-time subscriptions ───────────────────────────────────────
+// Real-time: 15s polling (replaces _sb.channel which causes DataCloneError on iOS)
 function setupRealtime() {
-  try {
-    _sb.channel('db-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'logs' }, () => { loadLogs(); })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, () => { loadEvents(); })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'memos' }, () => { loadMemos(); })
-      .subscribe((status) => {
-        console.log('Realtime status:', status);
-        if (status === 'SUBSCRIBED') {
-          document.getElementById('syncDot').classList.add('live');
-          setTimeout(() => document.getElementById('syncDot').classList.remove('live'), 2000);
-        }
-      });
-  } catch(e) {
-    console.error('Realtime setup error:', e);
-  }
+  let lastLogTs=0,lastEvId=0,lastMemoId=0;
+  setInterval(async()=>{
+    try{const r=await fetch(SB+'/rest/v1/logs?select=ts&order=ts.desc&limit=1',{headers:SBH});if(r.ok){const d=await r.json();const v=d[0]?.ts||0;if(v&&v!==lastLogTs){lastLogTs=v;loadLogs();}}}catch(e){}
+    try{const r=await fetch(SB+'/rest/v1/events?select=id&order=id.desc&limit=1',{headers:SBH});if(r.ok){const d=await r.json();const v=d[0]?.id||0;if(v&&v!==lastEvId){lastEvId=v;loadEvents();}}}catch(e){}
+    try{const r=await fetch(SB+'/rest/v1/memos?select=id&order=id.desc&limit=1',{headers:SBH});if(r.ok){const d=await r.json();const v=d[0]?.id||0;if(v&&v!==lastMemoId){lastMemoId=v;loadMemos();}}}catch(e){}
+  },15000);
 }
 
 // ── Load from Supabase ────────────────────────────────────────────
@@ -1319,8 +1369,8 @@ let yenClients=['馬赫','生活藝術','外泌體','前鋒美語'];
 
 function selectYenType(t){
   selectedYenType=selectedYenType===t?'':t;
-  document.querySelectorAll('#yenTypePills .task-pill').forEach(b=>b.classList.remove('active'));
-  if(selectedYenType)document.getElementById('type-'+t).classList.add('active');
+  document.querySelectorAll('.type-tab').forEach(b=>b.classList.remove('active'));
+  if(selectedYenType){const el=document.getElementById('type-'+t);if(el)el.classList.add('active');}
 }
 function selectYenClient(c){
   selectedYenClient=selectedYenClient===c?'':c;
@@ -1365,13 +1415,18 @@ async function saveFuel(){
   if(!amount){showToast('請輸入加油金額');return;}
   const liters=parseFloat(document.getElementById('fuelLiters').value)||0;
   const note=document.getElementById('fuelNote').value.trim();
-  const date=document.getElementById('fuelDate').value;
-  const [y,m,d]=date.split('-');
-  const dateZh=new Date(parseInt(y),parseInt(m)-1,parseInt(d)).toLocaleDateString('zh-TW');
-  const fuel={amount,liters,note,date:dateZh,ts:Date.now()};
-  await sbInsert('fuel_logs',{amount,liters,note,date:dateZh,ts:fuel.ts});
-  closeFuelModal();
-  showToast(`加油記錄已儲存 $${amount.toLocaleString()}`);
+  const dateVal=document.getElementById('fuelDate').value;
+  const[yr,mo,dy]=dateVal.split('-');
+  const dateZh=new Date(parseInt(yr),parseInt(mo)-1,parseInt(dy)).toLocaleDateString('zh-TW');
+  const tsNow=Date.now();
+  const row={amount:amount,liters:liters||null,note:note||null,date:dateZh,ts:tsNow};
+  // Use sbInsert (pure fetch, same as logs/memos/events)
+  const ok=await sbInsert('fuel_logs',row);
+  if(ok){
+    closeFuelModal();
+    showToast('加油記錄已儲存 $'+amount.toLocaleString());
+  }
+  // sbInsert already logs error to console; toast shown by caller on failure
 }
 
 // Confirm delete system
@@ -1385,6 +1440,18 @@ function cancelDelete(){document.getElementById('confirmDeleteModal').classList.
 function confirmDelete(){document.getElementById('confirmDeleteModal').classList.remove('show');if(_pendingDelete){_pendingDelete();_pendingDelete=null;}}
 
 // Backfill field toggle
+function setFilter(el){
+  document.querySelectorAll('#page-records .filter-pill').forEach(b=>{
+    b.style.background='transparent';b.style.color='var(--g3)';b.style.borderColor='var(--g1)';
+  });
+  el.style.background='var(--w)';el.style.color='#fff';el.style.borderColor='var(--w)';
+}
+function setMemoFilter(el){
+  document.querySelectorAll('#page-memo .filter-pill').forEach(b=>{
+    b.style.background='transparent';b.style.color='var(--g3)';b.style.borderColor='var(--g1)';
+  });
+  el.style.background='var(--w)';el.style.color='#fff';el.style.borderColor='var(--w)';
+}
 function toggleBfFields(){
   const emp=document.getElementById('bfEmp').value;
   const type=document.getElementById('bfType').value;
@@ -1399,16 +1466,24 @@ function updateCheckinBtn(){
   const isOut=empStatus[currentEmp]==='out';
   btn.textContent=isOut?'上班打卡':'下班打卡';
   btn.className='checkin-btn '+(isOut?'btn-in':'btn-out');
+  // Show fuel button for 4N
+  const fuelBtn=document.getElementById('fuelBtn');
+  if(fuelBtn)fuelBtn.style.display=currentEmp==='B'?'flex':'none';
   if(currentEmp==='B'){
     const ci=empStatus['B']==='in';
-    document.getElementById('bAmtSec').style.display=ci?'block':'none';
-    document.getElementById('bCheckInFields').style.display=ci?'none':'block';
-    if(!ci){['carAmount','kmEnd','tripCount'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});document.getElementById('amtPreview').classList.remove('show');}
+    const amtSec=document.getElementById('bAmtSec');
+    const ciFields=document.getElementById('bCheckInFields');
+    if(amtSec)amtSec.style.display=ci?'block':'none';
+    if(ciFields)ciFields.style.display=ci?'none':'block';
+    // Show preview inline
+    const preview=document.getElementById('amtPreviewInline');
+    if(preview)preview.style.display=ci?'block':'none';
+    if(!ci)['carAmount','kmEnd','tripCount'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   }
   if(currentEmp==='A'&&isOut){
-    // Reset Yen selections after check-out
     selectedYenType='';selectedYenClient='';
-    document.querySelectorAll('.task-pill').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.type-tab').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('#yenClientPills .task-pill').forEach(b=>b.classList.remove('active'));
   }
   if(isOut){sub.textContent='今日未打卡';return;}
   const last=[...logs].reverse().find(l=>l.emp===currentEmp&&l.type==='in');
@@ -1417,7 +1492,17 @@ function updateCheckinBtn(){
 
 function selectTask(task){/* replaced by selectYenType */}
 
-function updateAmtPreview(){const amt=parseInt(document.getElementById('carAmount').value)||0;const trips=parseInt(document.getElementById('tripCount').value)||0;document.getElementById('amtVal').textContent='$'+amt.toLocaleString();document.getElementById('tripVal').textContent=trips;const p=document.getElementById('amtPreview');if(amt>0||trips>0)p.classList.add('show');else p.classList.remove('show');}
+function updateAmtPreview(){
+  const a=parseInt(document.getElementById('carAmount')?.value)||0;
+  const t=parseInt(document.getElementById('tripCount')?.value)||0;
+  const av=document.getElementById('amtVal');const tv=document.getElementById('tripVal');
+  if(av)av.textContent='$'+a.toLocaleString();
+  if(tv)tv.textContent=t+'趟';
+  const prev=document.getElementById('amtPreviewInline');
+  if(prev)prev.style.display=(a>0||t>0)?'block':'none';
+  // legacy
+  const lp=document.getElementById('amtPreview');if(lp)lp.classList.toggle('show',a>0||t>0);
+}
 
 function openCamera(){document.getElementById('cameraInput').click();}
 function handleQRFile(input){if(!input.files||!input.files[0])return;const reader=new FileReader();reader.onload=e=>{const img=new Image();img.onload=()=>{const c=document.createElement('canvas');c.width=img.width;c.height=img.height;const ctx=c.getContext('2d');ctx.drawImage(img,0,0);const d=ctx.getImageData(0,0,img.width,img.height);const code=jsQR(d.data,d.width,d.height);if(code)handleQRResult(code.data);else{showToast('無法辨識 QR Code');showScanOk('無法辨識，請手動打卡');}};img.src=e.target.result;};reader.readAsDataURL(input.files[0]);input.value='';}
@@ -1588,7 +1673,11 @@ function drawQR(ctx,data,size,color){const m=21,cell=Math.floor(size/m),pat=genP
 function genPat(seed){let h=0;for(let i=0;i<seed.length;i++)h=(h*31+seed.charCodeAt(i))&0xffff;return Array.from({length:21},()=>Array.from({length:21},()=>{h=(h*1664525+1013904223)&0xffffffff;return(h&1)===1;}));}
 
 function renderCalendar(){
-  document.getElementById('calTitle').textContent=calYear+' · '+(calMonth+1);
+  const monthNames=['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
+  document.getElementById('calTitle').textContent=monthNames[calMonth];
+  document.getElementById('calTodayNum').textContent=calMonth===new Date().getMonth()&&calYear===new Date().getFullYear()?new Date().getDate():1;
+  document.getElementById('calTodayYear').textContent=calYear;
+  document.getElementById('calTodayDow').textContent=['SUN','MON','TUE','WED','THU','FRI','SAT'][new Date().getDay()];
   document.getElementById('calLabels').innerHTML=['S','M','T','W','T','F','S'].map(d=>`<div class="cal-day-label">${d}</div>`).join('');
   const grid=document.getElementById('calGrid');
   const first=new Date(calYear,calMonth,1).getDay();
@@ -1634,8 +1723,16 @@ function renderCalendar(){
     if(isToday) cls+=' today';
     if(isSel) cls+=' selected';
     // Show dots only (max 3) - clean minimal look
-    const visibleBars=bars.slice(0,3);
-    const barsHtml='<div style="display:flex;justify-content:center;gap:2px;margin-top:3px">'+visibleBars.map(b=>`<span style="width:5px;height:5px;border-radius:50%;background:${b.color};opacity:0.9;display:inline-block;flex-shrink:0"></span>`).join('')+'</div>';
+    // Collect ALL events on this day (including multi-day spans)
+    const dkDateObj=new Date(dk);
+    const allDayEvents=events.filter(e=>{
+      if(e.date===dk)return true;
+      if(e.endDate&&e.endDate>e.date){const s=new Date(e.date);const en=new Date(e.endDate);return dkDateObj>=s&&dkDateObj<=en;}
+      return false;
+    });
+    const colorMap2={green:'#7bc67e',blue:'#4a9eff',orange:'#ff9f45',pink:'#f48fb1',purple:'#b39ddb',white:'#999'};
+    const visibleEvs=allDayEvents.slice(0,3);
+    const barsHtml=visibleEvs.length?'<div style="display:flex;justify-content:center;gap:2px;margin-top:2px">'+visibleEvs.map(e=>`<span style="width:5px;height:5px;border-radius:50%;background:${colorMap2[e.color||'blue']};display:inline-block;flex-shrink:0"></span>`).join('')+(allDayEvents.length>3?'<span style="width:5px;height:5px;border-radius:50%;background:#ccc;display:inline-block;flex-shrink:0"></span>':'')+'</div>':'';
     const numStyle=isToday?'style="color:#fff !important"':'';
     html2+=`<div class="${cls}" onclick="selectCalDay('${dk}')"><div class="cal-dn" ${numStyle}>${d}</div>${barsHtml}</div>`;
   }
@@ -1653,49 +1750,123 @@ function showDayEvents(dk){
   const p=dk.split('-');
   const todayStr=new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0')+'-'+String(new Date().getDate()).padStart(2,'0');
   const isToday2=dk===todayStr;
-  document.getElementById('dayTitle').textContent=(isToday2?'今天 · ':'')+parseInt(p[1])+'月'+parseInt(p[2])+'日';
-  const evs=events.filter(e=>e.date===dk);
-  const el=document.getElementById('dayEvents');
-  if(!evs.length){el.innerHTML='<div style="font-size:12px;color:var(--g4)">當日無排程</div>';return;}
+  const panel=document.getElementById('evPanel');
+  const titleEl=document.getElementById('dayTitle');
+  const listEl=document.getElementById('dayEvents');
+  if(!panel||!titleEl||!listEl)return;
+  titleEl.textContent=(isToday2?'今天 · ':'')+parseInt(p[1])+'月'+parseInt(p[2])+'日';
+
+  const dkDate=new Date(dk);
+  const eventsOnDay=events.filter(e=>{
+    if(e.date===dk)return true;
+    if(e.endDate&&e.endDate>e.date){
+      const start=new Date(e.date);const end=new Date(e.endDate);
+      return dkDate>=start&&dkDate<=end;
+    }
+    return false;
+  });
+
+  panel.style.display='block';
+  if(!eventsOnDay.length){
+    listEl.innerHTML='<div style="font-size:12px;color:#888;padding:4px 0">當日無排程</div>';
+    return;
+  }
+
+  const colorMap={green:'#7bc67e',blue:'#4a9eff',orange:'#ff9f45',pink:'#f48fb1',purple:'#b39ddb',white:'#aaa'};
   const wl={A:'Yen 🐸',B:'4N 🐵',both:'兩人'};
-  const cmap={white:'#f0f0f0',blue:'#4a9eff',green:'#30d158',yellow:'#ffd60a',red:'#ff453a',purple:'#bf5af2'};
-  const wcol={A:'#f0f0f0',B:'#30d158',both:'#ffd60a'};
-  const rl=r=>{if(!r||r==='0')return'';const m=parseInt(r);if(m<60)return m+'分鐘前';if(m<1440)return(m/60)+'小時前';const d=m/1440;return d===1?'1天前':d+'天前';};
-  el.innerHTML=evs.map((e,i)=>{
-    const c=e.color&&e.color!=='white'?cmap[e.color]:wcol[e.who]||'#f0f0f0';
-    const ts=e.time?(e.endDate?e.date+' '+e.time+' → '+e.endDate+(e.endTime?' '+e.endTime:''):e.time):'';
-    const remind=e.remind&&e.remind!=='0'?'<span style="color:var(--g3)">⏰ '+rl(e.remind)+'</span>':'';
-    return '<div class="event-item">'
-      +'<div style="width:10px;height:10px;border-radius:50%;background:'+c+';margin-top:3px;flex-shrink:0"></div>'
-      +'<div style="flex:1;min-width:0;padding-left:10px">'
-      +'<div style="font-size:14px;color:var(--w);font-weight:500">'+e.title+'</div>'
-      +(ts||e.note?'<div style="font-size:11px;color:var(--g4);margin-top:3px">'+(ts||'')+(e.note?' · '+e.note:'')+'</div>':'')
-      +'<div style="font-size:10px;margin-top:4px;display:flex;gap:8px">'
-      +'<span style="color:'+c+'">'+wl[e.who]+'</span>'+remind
-      +'</div></div>'
-      +(e._id?'<button style="border:none;background:none;color:#888;font-size:15px;cursor:pointer;padding:2px 6px" onclick="openEditEventModal('+e._id+')" title="編輯">✎</button>':'')+'<button class="event-del" onclick="deleteEvent(\''+dk+'\','+i+')">×</button>'
-      +'</div>';
+
+  // Store current day events for button handlers
+  window._curDayEvents=eventsOnDay;
+  window._curDk=dk;
+
+  listEl.innerHTML=eventsOnDay.map((e,i)=>{
+    const c=colorMap[e.color||'green']||'#7bc67e';
+    const ts=e.time?(e.time+(e.endDate&&e.endDate!==e.date?' → '+e.endDate+(e.endTime?' '+e.endTime:''):(e.endTime?' → '+e.endTime:''))):'';
+    const remind=e.remind&&e.remind!=='0'?(' · ⏰ '+formatRemind(e.remind)):'';
+    return `<div class="ev-item">
+      <div style="width:10px;height:10px;border-radius:50%;background:${c};margin-top:3px;flex-shrink:0"></div>
+      <div style="flex:1;min-width:0;padding-left:10px">
+        <div style="font-size:14px;color:var(--w);font-weight:600">${e.title}</div>
+        ${ts||e.note?`<div style="font-size:11px;color:var(--g4);margin-top:2px">${ts||''}${e.note?' · '+e.note:''}</div>`:''}
+        <div style="font-size:10px;margin-top:4px;color:var(--g3)">${wl[e.who||'A']}${remind}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0;align-items:center">
+        <button style="border:none;background:var(--s3);color:var(--g5);font-size:13px;cursor:pointer;padding:8px 12px;border-radius:8px" onclick="evEdit(${i})">✎</button>
+        <button style="border:none;background:var(--s3);color:var(--g5);font-size:13px;cursor:pointer;padding:8px 10px;border-radius:8px" onclick="evDel(${i})">✕</button>
+      </div>
+    </div>`;
   }).join('');
 }
+function evEdit(i){openEditEventByIndex(i,window._curDk||'');}
+function evDel(i){deleteEvent(window._curDk||'',i);}
+function formatRemind(r){
+  const m=parseInt(r);
+  if(m===0)return'不提醒';if(m<60)return m+'分前';
+  if(m<1440)return(m/60)+'小時前';return(m/1440)+'天前';
+}
+
+
+function formatRemind(r){
+  const m=parseInt(r);
+  if(m===0)return'不提醒';
+  if(m<60)return m+'分前';
+  if(m<1440)return(m/60)+'小時前';
+  return(m/1440)+'天前';
+}
+
 
 function deleteEvent(dk,i){
-  const evs=events.filter(e=>e.date===dk);
-  const ev=evs[i];
-  const msg=ev?'「'+ev.title+'」':'此排程';
+  const dkDate=new Date(dk);
+  const eventsOnDay=events.filter(e=>{
+    if(e.date===dk)return true;
+    if(e.endDate&&e.endDate>e.date){
+      const start=new Date(e.date);const end=new Date(e.endDate);
+      return dkDate>=start&&dkDate<=end;
+    }
+    return false;
+  });
+  const ev=eventsOnDay[i];
+  if(!ev){showToast('找不到排程');return;}
+  const msg='「'+ev.title+'」';
   askDelete('確定要刪除'+msg+'嗎？',()=>{
-    const all=events.reduce((a,e,j)=>{if(e.date===dk)a.push(j);return a;},[]);
-    const delEv=events[all[i]];
-    if(delEv&&delEv._id)sbDelete('events','id',delEv._id);
-    events.splice(all[i],1);
+    const globalIdx=events.indexOf(ev);
+    if(globalIdx>=0)events.splice(globalIdx,1);
+    if(ev._id)sbDelete('events','id',ev._id);
     renderCalendar();showDayEvents(dk);showToast('排程已刪除');
   });
 }
 
+
 function changeMonth(dir){calMonth+=dir;if(calMonth>11){calMonth=0;calYear++;}if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
 function toggleCustomRemind(sel){document.getElementById('customRemindWrap').style.display=sel.value==='custom'?'block':'none';}
-function openEditEventModal(evId){
-  const ev=events.find(e=>e._id===evId||e.ts===evId);
+function openEditEventByIndex(idx,dk){
+  const dkDate=new Date(dk);
+  const eventsOnDay=events.filter(e=>{
+    if(e.date===dk)return true;
+    if(e.endDate&&e.endDate>e.date){
+      const start=new Date(e.date);const end=new Date(e.endDate);
+      return dkDate>=start&&dkDate<=end;
+    }
+    return false;
+  });
+  const ev=eventsOnDay[idx];
   if(!ev){showToast('找不到排程');return;}
+  const globalIdx=events.indexOf(ev);
+  document.getElementById('editEvId').value=String(globalIdx);
+  document.getElementById('editEvTitle').value=ev.title||'';
+  document.getElementById('editEvDate').value=ev.date||'';
+  document.getElementById('editEvTime').value=ev.time||'';
+  document.getElementById('editEvEndDate').value=ev.endDate||'';
+  document.getElementById('editEvEndTime').value=ev.endTime||'';
+  document.getElementById('editEvNote').value=ev.note||'';
+  selectEditEvWho(ev.who||'A');
+  selectEditEvColor(ev.color||'green');
+  document.getElementById('editEventModal').classList.add('show');
+}
+
+function openEditEventModal(evId){
+  const ev=events.find(e=>String(e._id)===String(evId)||String(e.ts)===String(evId)||e._id===evId);
+  if(!ev){console.log('events:',events.map(e=>e._id));showToast('找不到排程');return;}
   document.getElementById('editEvId').value=evId;
   document.getElementById('editEvTitle').value=ev.title||'';
   document.getElementById('editEvDate').value=ev.date||'';
@@ -1723,9 +1894,9 @@ function selectEditEvColor(val){
   });
 }
 async function saveEditEvent(){
-  const evId=document.getElementById('editEvId').value;
-  const ev=events.find(e=>String(e._id)===String(evId)||String(e.ts)===String(evId));
-  if(!ev){showToast('找不到排程');return;}
+  const evIdxStr=document.getElementById('editEvId').value;
+  const ev=events[parseInt(evIdxStr)];
+  if(!ev){showToast('找不到排程：'+evIdxStr);return;}
   ev.title=document.getElementById('editEvTitle').value.trim();
   ev.date=document.getElementById('editEvDate').value;
   ev.time=document.getElementById('editEvTime').value;
@@ -1816,7 +1987,12 @@ function addEvent(){
     row.color=ev.color||'green';
     console.log('Saving event:', JSON.stringify(row));
     const ok=await sbInsert('events',row);
-    console.log('Event save result:', ok);
+    console.log('Event save result:', JSON.stringify(ok));
+    if(ok&&ok[0]&&ok[0].id){
+      // update the local event with the DB id
+      const saved=events[events.length-1];
+      if(saved&&!saved._id)saved._id=ok[0].id;
+    }
     if(!ok)showToast('⚠️ 儲存失敗，請重試');
   })();
   document.getElementById('evTitle').value='';document.getElementById('evNote').value='';document.getElementById('evEndDate').value='';document.getElementById('evEndTime').value='';const cwrap=document.getElementById('customRemindWrap');if(cwrap)cwrap.style.display='none';
@@ -1853,19 +2029,35 @@ function renderMemos(filter){
     if(isHalf&&i+1<filtered.length&&filtered[i+1].size==='half'){
       const m2=filtered[i+1];const color2=colorMap[m2.color||'white']||'mc-white';
       html+='<div class="memo-half-row">';
-      html+=memoCardHTML(m,wn,color);
-      html+=memoCardHTML(m2,wn,color2);
+      html+=memoCardHTML(m,wn,color,i,filtered.length);
+      html+=memoCardHTML(m2,wn,color2,i+1,filtered.length);
       html+='</div>';
       i+=2;
     } else {
-      html+='<div class="memo-full">'+memoCardHTML(m,wn,color)+'</div>';
+      html+='<div class="memo-full">'+memoCardHTML(m,wn,color,i,filtered.length)+'</div>';
       i++;
     }
   }
   el.innerHTML=html;
+
 }
-function memoCardHTML(m,wn,color){
-  return '<div class="memo-card '+color+'"><div class="memo-who-row"><span class="memo-who">'+wn[m.who]+'</span><span class="memo-date">'+m.date+'</span></div><button class="memo-del" onclick="deleteMemo('+m.id+')">×</button><div class="memo-text">'+m.text.replace(/\n/g,'<br>')+'</div></div>';
+function memoCardHTML(m,wn,color,idx,total){
+  const canUp=idx>0,canDown=idx<total-1;
+  return `<div class="memo-card ${color}" style="position:relative;padding-bottom:38px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <span class="memo-who">${wn[m.who]}</span>
+    </div>
+    <div class="memo-text">${m.text.replace(/\n/g,'<br>')}</div>
+    <div style="position:absolute;bottom:8px;left:12px;right:12px;display:flex;align-items:center;justify-content:space-between">
+      <span class="memo-date">${m.date}</span>
+      <div style="display:flex;gap:4px">
+        <button onclick="moveMemo(${m.id},-1)" ${canUp?'':'disabled'} style="border:none;background:rgba(0,0,0,0.07);color:${canUp?'#666':'#ccc'};font-size:12px;cursor:pointer;padding:4px 8px;border-radius:6px;line-height:1">↑</button>
+        <button onclick="moveMemo(${m.id},1)" ${canDown?'':'disabled'} style="border:none;background:rgba(0,0,0,0.07);color:${canDown?'#666':'#ccc'};font-size:12px;cursor:pointer;padding:4px 8px;border-radius:6px;line-height:1">↓</button>
+        <button onclick="editMemoById(${m.id})" style="border:none;background:rgba(0,0,0,0.07);color:#888;font-size:11px;cursor:pointer;padding:4px 8px;border-radius:6px;line-height:1">✎</button>
+        <button onclick="deleteMemoById(${m.id})" style="border:none;background:rgba(0,0,0,0.07);color:#888;font-size:11px;cursor:pointer;padding:4px 8px;border-radius:6px;line-height:1">✕</button>
+      </div>
+    </div>
+  </div>`;
 }
 function deleteMemo(id){
   askDelete('確定要刪除這則備忘嗎？',()=>{
@@ -1876,14 +2068,57 @@ function deleteMemo(id){
     showToast('備忘已刪除');
   });
 }
+function editMemoById(id){
+  const m=memos.find(x=>x.id===id||x.id===String(id)||String(x.id)===String(id));
+  if(!m)return;
+  document.getElementById('editMemoId').value=m.id;
+  document.getElementById('editMemoText').value=m.text;
+  document.getElementById('editMemoWho').value=m.who||'A';
+  _editMemoColor=m.color||'white';
+  document.querySelectorAll('#editMemoColorPicker .color-dot').forEach(d=>d.classList.remove('sel'));
+  const cd=document.querySelector('#editMemoColorPicker [data-color="'+_editMemoColor+'"]');if(cd)cd.classList.add('sel');
+  document.getElementById('editMemoModal').classList.add('show');
+}
+function deleteMemoById(id){
+  askDelete('確定要刪除這則備忘嗎？',()=>{
+    const m=memos.find(x=>String(x.id)===String(id));
+    if(m&&m._id)sbDelete('memos','id',m._id);
+    else if(m)sbDelete('memos','memo_id',m.id);
+    memos=memos.filter(x=>String(x.id)!==String(id));
+    renderMemos(curMemoFilter);showToast('備忘已刪除');
+  });
+}
+function moveMemo(id,dir){
+  const allIds=memos.map(m=>m.id);
+  const idx=allIds.indexOf(id);
+  if(idx<0)return;
+  const newIdx=idx+dir;
+  if(newIdx<0||newIdx>=memos.length)return;
+  const tmp=memos[idx];memos[idx]=memos[newIdx];memos[newIdx]=tmp;
+  renderMemos(curMemoFilter);
+  showToast(dir<0?'往上移':'往下移');
+}
 function filterMemo(filter,btn){document.querySelectorAll('#page-memo .filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderMemos(filter);}
 
 function updateReport(){
   const ds=document.getElementById('reportRange')?document.getElementById('reportRange').value:'month';
   const now=new Date();
   let filtered=logs;
-  if(ds==='week'){const wStart=new Date(now);wStart.setDate(now.getDate()-now.getDay());wStart.setHours(0,0,0,0);filtered=logs.filter(l=>{const ld=new Date(l.ts);return ld>=wStart;});}
-  else if(ds==='month'){const mStart=new Date(now.getFullYear(),now.getMonth(),1);filtered=logs.filter(l=>new Date(l.ts)>=mStart);}
+  if(ds==='week'){
+    const wStart=new Date(now);wStart.setDate(now.getDate()-now.getDay());wStart.setHours(0,0,0,0);
+    filtered=logs.filter(l=>new Date(l.ts)>=wStart);
+  } else if(ds==='lastweek'){
+    const wEnd=new Date(now);wEnd.setDate(now.getDate()-now.getDay());wEnd.setHours(0,0,0,0);
+    const wStart=new Date(wEnd);wStart.setDate(wStart.getDate()-7);
+    filtered=logs.filter(l=>{const d=new Date(l.ts);return d>=wStart&&d<wEnd;});
+  } else if(ds==='month'){
+    const mStart=new Date(now.getFullYear(),now.getMonth(),1);
+    filtered=logs.filter(l=>new Date(l.ts)>=mStart);
+  } else if(ds==='lastmonth'){
+    const mStart=new Date(now.getFullYear(),now.getMonth()-1,1);
+    const mEnd=new Date(now.getFullYear(),now.getMonth(),1);
+    filtered=logs.filter(l=>{const d=new Date(l.ts);return d>=mStart&&d<mEnd;});
+  }
 
   // ── YEN ───────────────────────────────────────────────────────
   const yenLogs=filtered.filter(l=>l.emp==='A');
@@ -2014,6 +2249,10 @@ function updateReport(){
     fnEl.innerHTML=maxDay?`<div style="font-size:12px;color:var(--g4)">單日最高：$${(maxDay.amount||0).toLocaleString()} · ${maxDay.date}</div>`:'<div style="font-size:12px;color:var(--g3)">尚無資料</div>';
   }
 
+  // Fuel logs - load when 4N tab visible
+  const tab=document.getElementById('reportTab')?document.getElementById('reportTab').value:'yen';
+  if(tab==='4n')loadFuelSection(ds);
+
   // CSV table
   const tbody=document.getElementById('rBody');
   if(tbody){
@@ -2097,35 +2336,117 @@ function setReportTab(tab){
   document.getElementById('reportTab').value=tab;
   const yTab=document.getElementById('rtab-yen');
   const nTab=document.getElementById('rtab-4n');
+  const yl=document.getElementById('rtab-yen-label');
+  const nl=document.getElementById('rtab-4n-label');
   const yPanel=document.getElementById('panel-yen');
   const nPanel=document.getElementById('panel-4n');
   if(tab==='yen'){
-    if(yTab){yTab.style.background='#111';}
-    if(nTab){nTab.style.background='#fff';}
-    const nl=document.getElementById('rtab-4n-label');if(nl)nl.style.color='var(--g3)';
+    if(yTab){yTab.style.background='#fff';}
+    if(nTab){nTab.style.background='#e8e8e8';}
+    if(yl)yl.style.color='#111';
+    if(nl)nl.style.color='#888';
     if(yPanel)yPanel.style.display='block';
     if(nPanel)nPanel.style.display='none';
   } else {
-    if(nTab){nTab.style.background='#111';nTab.style.borderColor='transparent';}
-    if(yTab){yTab.style.background='#fff';yTab.style.borderRadius='16px 0 0 0';}
-    const nl=document.getElementById('rtab-4n-label');if(nl)nl.style.color='#fff';
-    // Make 4N tab dark and Yen light
-    const yChildren=yTab&&yTab.querySelectorAll('span');
-    if(yChildren&&yChildren[1])yChildren[1].style.color='var(--g3)';
+    if(nTab){nTab.style.background='#fff';}
+    if(yTab){yTab.style.background='#e8e8e8';}
+    if(nl)nl.style.color='#111';
+    if(yl)yl.style.color='#888';
     if(nPanel)nPanel.style.display='block';
     if(yPanel)yPanel.style.display='none';
   }
   updateReport();
+  if(tab==='4n'){const ds=document.getElementById('reportRange')?document.getElementById('reportRange').value:'month';setTimeout(()=>loadFuelSection(ds),50);}
 }
 function setReportRange(r){
   document.getElementById('reportRange').value=r;
-  const labels={'week':'本週','month':'本月','all':'全部'};
-  const lbl=document.getElementById('rng-label');if(lbl)lbl.textContent=labels[r]||'本月';
-  ['week','month','all'].forEach(k=>{
-    const b=document.getElementById('rng-'+k);
-    if(b&&b.tagName==='BUTTON')b.style.color=k===r?'var(--w)':'var(--g3)';
-  });
+  const labels={'week':'本週','month':'本月','all':'全部','lastweek':'上週','lastmonth':'上月'};
+  const lbl=document.getElementById('rng-label');if(lbl)lbl.textContent=labels[r]||r;
   updateReport();
+}
+const _ranges=['lastmonth','lastweek','week','month','all'];
+function cycleRange(dir){
+  const cur=document.getElementById('reportRange').value||'month';
+  const idx=_ranges.indexOf(cur);
+  const next=_ranges[Math.max(0,Math.min(_ranges.length-1,idx+dir))];
+  setReportRange(next);
+}
+
+
+async function loadFuelSection(ds){
+  const fuelEl=document.getElementById('fuelSection');
+  if(!fuelEl)return;
+  fuelEl.innerHTML='<div style="font-size:12px;color:var(--g3)">載入中...</div>';
+  const rows=await sbFetch('fuel_logs');
+  if(!rows||!rows.length){fuelEl.innerHTML='<div style="font-size:12px;color:var(--g3)">尚無加油紀錄</div>';return;}
+
+  // Filter by range using ts or date string
+  const now=new Date();
+  let filtered=rows;
+  if(ds!=='all'){
+    filtered=rows.filter(r=>{
+      let d;
+      if(r.ts&&r.ts>0)d=new Date(r.ts);
+      else if(r.date){const p=r.date.replace(/\//g,'-');d=new Date(p);}
+      if(!d||isNaN(d))return ds==='all';
+      if(ds==='week'){const s=new Date(now);s.setDate(now.getDate()-now.getDay());s.setHours(0,0,0,0);return d>=s;}
+      if(ds==='month'){return d>=new Date(now.getFullYear(),now.getMonth(),1);}
+      if(ds==='lastmonth'){const s=new Date(now.getFullYear(),now.getMonth()-1,1);const e=new Date(now.getFullYear(),now.getMonth(),1);return d>=s&&d<e;}
+      if(ds==='lastweek'){const e=new Date(now);e.setDate(now.getDate()-now.getDay());e.setHours(0,0,0,0);const s=new Date(e);s.setDate(s.getDate()-7);return d>=s&&d<e;}
+      return true;
+    });
+  }
+
+  if(!filtered.length){fuelEl.innerHTML='<div style="font-size:12px;color:var(--g3)">此區間無加油紀錄</div>';return;}
+
+  const totalAmt=filtered.reduce((s,r)=>s+(r.amount||0),0);
+  const totalL=filtered.reduce((s,r)=>s+(parseFloat(r.liters)||0),0);
+  const avgAmt=filtered.length>0?Math.round(totalAmt/filtered.length):0;
+  const pricePerL=totalL>0?Math.round(totalAmt/totalL):0;
+
+  // Group by month for bar chart
+  const monthMap={};
+  filtered.forEach(r=>{
+    const key=(r.date||'').slice(0,7)||'其他';
+    monthMap[key]=(monthMap[key]||0)+(r.amount||0);
+  });
+  const months=Object.keys(monthMap).sort();
+  const maxAmt2=Math.max(...Object.values(monthMap),1);
+
+  const bars=months.map(m=>{
+    const w=Math.round(monthMap[m]/maxAmt2*100);
+    return `<div style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--g4);font-family:var(--mono);margin-bottom:3px">
+        <span>${m}</span><span>$${monthMap[m].toLocaleString()}</span>
+      </div>
+      <div style="height:8px;background:var(--s3);border-radius:4px;overflow:hidden">
+        <div style="height:100%;width:${w}%;background:#f97316;border-radius:4px"></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  fuelEl.innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px">
+      <div style="background:var(--s3);border-radius:10px;padding:12px">
+        <div style="font-size:22px;font-weight:800;color:var(--w)">$${totalAmt.toLocaleString()}</div>
+        <div style="font-size:9px;color:var(--g3);margin-top:2px;font-family:var(--mono)">總加油金額</div>
+      </div>
+      <div style="background:var(--s3);border-radius:10px;padding:12px">
+        <div style="font-size:22px;font-weight:800;color:var(--w)">${totalL>0?totalL.toFixed(1)+'L':'—'}</div>
+        <div style="font-size:9px;color:var(--g3);margin-top:2px;font-family:var(--mono)">總公升數</div>
+      </div>
+      <div style="background:var(--s3);border-radius:10px;padding:12px">
+        <div style="font-size:22px;font-weight:800;color:#f97316">$${avgAmt.toLocaleString()}</div>
+        <div style="font-size:9px;color:var(--g3);margin-top:2px;font-family:var(--mono)">平均每次</div>
+      </div>
+      <div style="background:var(--s3);border-radius:10px;padding:12px">
+        <div style="font-size:22px;font-weight:800;color:var(--blue)">$${pricePerL}</div>
+        <div style="font-size:9px;color:var(--g3);margin-top:2px;font-family:var(--mono)">每公升均價</div>
+      </div>
+    </div>
+    ${months.length>0?`<div style="font-size:9px;color:var(--g3);letter-spacing:0.08em;text-transform:uppercase;font-family:var(--mono);margin-bottom:8px">月份趨勢</div>${bars}`:''}
+    <div style="font-size:9px;color:var(--g3);margin-top:4px;font-family:var(--mono)">共 ${filtered.length} 筆紀錄</div>
+  `;
 }
 
 function exportCSV(){if(!logs.length){showToast('尚無資料可匯出');return;}const rows=[['日期','時間','員工','打卡類型','工作項目','跑車金額','里程km','工時min']];logs.forEach(l=>rows.push([l.date,l.time,l.name,l.type==='in'?'上班':'下班',l.detail||'',l.amount||'',l.km||'',l.workMins||'']));const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\uFEFF'+rows.map(r=>r.join(',')).join('\n')],{type:'text/csv;charset=utf-8;'}));a.download='打卡紀錄_'+new Date().toLocaleDateString('zh-TW').replace(/\//g,'-')+'.csv';a.click();showToast('CSV 匯出成功！');}
