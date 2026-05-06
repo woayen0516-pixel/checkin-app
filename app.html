@@ -2367,76 +2367,93 @@ async function loadFuelSection(ds){
   const fuelEl=document.getElementById('fuelSection');
   if(!fuelEl)return;
   fuelEl.innerHTML='<div style="font-size:12px;color:var(--g3)">載入中...</div>';
-  const rows=await sbFetch('fuel_logs');
+  let rows=[];
+  try{
+    const r=await fetch(SB+'/rest/v1/fuel_logs?select=*&order=ts.desc&limit=500',{headers:SBH});
+    if(r.ok)rows=await r.json();
+    else{const t=await r.text();console.error('fuel_logs fetch',r.status,t);}
+  }catch(e){console.error('fuel fetch',e);}
   if(!rows||!rows.length){fuelEl.innerHTML='<div style="font-size:12px;color:var(--g3)">尚無加油紀錄</div>';return;}
 
-  // Filter by range using ts or date string
+  function toDate(r){
+    if(r.ts){const n=Number(r.ts);if(n>1000000000000){const d=new Date(n);if(!isNaN(d))return d;}}
+    if(r.date){const s=String(r.date).replace(/\//g,'-');const d=new Date(s+'T00:00:00');if(!isNaN(d))return d;}
+    if(r.created_at){const d=new Date(r.created_at);if(!isNaN(d))return d;}
+    return null;
+  }
   const now=new Date();
   let filtered=rows;
-  if(ds!=='all'){
+  if(ds&&ds!=='all'){
     filtered=rows.filter(r=>{
-      let d;
-      if(r.ts&&r.ts>0)d=new Date(r.ts);
-      else if(r.date){const p=r.date.replace(/\//g,'-');d=new Date(p);}
-      if(!d||isNaN(d))return ds==='all';
+      const d=toDate(r);if(!d)return false;
       if(ds==='week'){const s=new Date(now);s.setDate(now.getDate()-now.getDay());s.setHours(0,0,0,0);return d>=s;}
       if(ds==='month'){return d>=new Date(now.getFullYear(),now.getMonth(),1);}
       if(ds==='lastmonth'){const s=new Date(now.getFullYear(),now.getMonth()-1,1);const e=new Date(now.getFullYear(),now.getMonth(),1);return d>=s&&d<e;}
-      if(ds==='lastweek'){const e=new Date(now);e.setDate(now.getDate()-now.getDay());e.setHours(0,0,0,0);const s=new Date(e);s.setDate(s.getDate()-7);return d>=s&&d<e;}
+      if(ds==='lastweek'){const wEnd=new Date(now);wEnd.setDate(now.getDate()-now.getDay());wEnd.setHours(0,0,0,0);const wSt=new Date(wEnd);wSt.setDate(wSt.getDate()-7);return d>=wSt&&d<wEnd;}
       return true;
     });
   }
-
   if(!filtered.length){fuelEl.innerHTML='<div style="font-size:12px;color:var(--g3)">此區間無加油紀錄</div>';return;}
 
-  const totalAmt=filtered.reduce((s,r)=>s+(r.amount||0),0);
+  const totalAmt=filtered.reduce((s,r)=>s+(Number(r.amount)||0),0);
   const totalL=filtered.reduce((s,r)=>s+(parseFloat(r.liters)||0),0);
   const avgAmt=filtered.length>0?Math.round(totalAmt/filtered.length):0;
   const pricePerL=totalL>0?Math.round(totalAmt/totalL):0;
 
-  // Group by month for bar chart
   const monthMap={};
   filtered.forEach(r=>{
-    const key=(r.date||'').slice(0,7)||'其他';
-    monthMap[key]=(monthMap[key]||0)+(r.amount||0);
+    const d=toDate(r);
+    const key=d?(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')):(String(r.date||'').slice(0,7)||'其他');
+    monthMap[key]=(monthMap[key]||0)+(Number(r.amount)||0);
   });
   const months=Object.keys(monthMap).sort();
   const maxAmt2=Math.max(...Object.values(monthMap),1);
-
   const bars=months.map(m=>{
     const w=Math.round(monthMap[m]/maxAmt2*100);
-    return `<div style="margin-bottom:8px">
-      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--g4);font-family:var(--mono);margin-bottom:3px">
-        <span>${m}</span><span>$${monthMap[m].toLocaleString()}</span>
-      </div>
-      <div style="height:8px;background:var(--s3);border-radius:4px;overflow:hidden">
-        <div style="height:100%;width:${w}%;background:#f97316;border-radius:4px"></div>
+    return `<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:10px;color:var(--g4);font-family:var(--mono);margin-bottom:3px"><span>${m}</span><span>$${monthMap[m].toLocaleString()}</span></div><div style="height:7px;background:var(--s3);border-radius:4px;overflow:hidden"><div style="height:100%;width:${w}%;background:#f97316;border-radius:4px"></div></div></div>`;
+  }).join('');
+
+  const listHtml=filtered.map(r=>{
+    const d=toDate(r);
+    const dateStr=d?d.toLocaleDateString('zh-TW'):(r.date||'');
+    const litStr=r.liters&&parseFloat(r.liters)>0?' · '+parseFloat(r.liters).toFixed(1)+'L':'';
+    const noteStr=r.note?' · '+r.note:'';
+    const rid=r.id;
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:0.5px solid var(--g1)">
+      <div style="font-size:12px;color:var(--g4);font-family:var(--mono)">${dateStr}${litStr}${noteStr}</div>
+      <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+        <span style="font-size:15px;font-weight:800;color:#f97316">$${(Number(r.amount)||0).toLocaleString()}</span>
+        <span onclick="deleteFuelLog(${rid})" style="font-size:16px;color:#ccc;cursor:pointer;user-select:none;padding:2px 4px">✕</span>
       </div>
     </div>`;
   }).join('');
 
   fuelEl.innerHTML=`
     <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px">
-      <div style="background:var(--s3);border-radius:10px;padding:12px">
-        <div style="font-size:22px;font-weight:800;color:var(--w)">$${totalAmt.toLocaleString()}</div>
-        <div style="font-size:9px;color:var(--g3);margin-top:2px;font-family:var(--mono)">總加油金額</div>
-      </div>
-      <div style="background:var(--s3);border-radius:10px;padding:12px">
-        <div style="font-size:22px;font-weight:800;color:var(--w)">${totalL>0?totalL.toFixed(1)+'L':'—'}</div>
-        <div style="font-size:9px;color:var(--g3);margin-top:2px;font-family:var(--mono)">總公升數</div>
-      </div>
-      <div style="background:var(--s3);border-radius:10px;padding:12px">
-        <div style="font-size:22px;font-weight:800;color:#f97316">$${avgAmt.toLocaleString()}</div>
-        <div style="font-size:9px;color:var(--g3);margin-top:2px;font-family:var(--mono)">平均每次</div>
-      </div>
-      <div style="background:var(--s3);border-radius:10px;padding:12px">
-        <div style="font-size:22px;font-weight:800;color:var(--blue)">$${pricePerL}</div>
-        <div style="font-size:9px;color:var(--g3);margin-top:2px;font-family:var(--mono)">每公升均價</div>
-      </div>
+      <div style="background:var(--s3);border-radius:10px;padding:12px"><div style="font-size:22px;font-weight:800;color:var(--w)">$${totalAmt.toLocaleString()}</div><div style="font-size:9px;color:var(--g3);margin-top:2px;font-family:var(--mono)">總加油金額</div></div>
+      <div style="background:var(--s3);border-radius:10px;padding:12px"><div style="font-size:22px;font-weight:800;color:var(--w)">${totalL>0?totalL.toFixed(1)+'L':'—'}</div><div style="font-size:9px;color:var(--g3);margin-top:2px;font-family:var(--mono)">總公升數</div></div>
+      <div style="background:var(--s3);border-radius:10px;padding:12px"><div style="font-size:22px;font-weight:800;color:#f97316">$${avgAmt.toLocaleString()}</div><div style="font-size:9px;color:var(--g3);margin-top:2px;font-family:var(--mono)">平均每次</div></div>
+      <div style="background:var(--s3);border-radius:10px;padding:12px"><div style="font-size:22px;font-weight:800;color:var(--blue)">$${pricePerL>0?pricePerL:'—'}</div><div style="font-size:9px;color:var(--g3);margin-top:2px;font-family:var(--mono)">每公升均價</div></div>
     </div>
-    ${months.length>0?`<div style="font-size:9px;color:var(--g3);letter-spacing:0.08em;text-transform:uppercase;font-family:var(--mono);margin-bottom:8px">月份趨勢</div>${bars}`:''}
-    <div style="font-size:9px;color:var(--g3);margin-top:4px;font-family:var(--mono)">共 ${filtered.length} 筆紀錄</div>
-  `;
+    ${months.length>1?'<div style="font-size:9px;color:var(--g3);letter-spacing:0.08em;text-transform:uppercase;font-family:var(--mono);margin-bottom:8px">月份趨勢</div>'+bars:''}
+    ${listHtml}
+    <div style="font-size:9px;color:var(--g3);margin-top:8px;font-family:var(--mono)">共 ${filtered.length} 筆紀錄</div>`;
+}
+
+function deleteFuelLog(id){
+  askDelete('確定要刪除這筆加油紀錄？',async()=>{
+    try{
+      const r=await fetch(SB+'/rest/v1/fuel_logs?id=eq.'+id,{method:'DELETE',headers:SBH});
+      if(r.ok){
+        showToast('加油紀錄已刪除');
+        const ds=document.getElementById('reportRange')?document.getElementById('reportRange').value:'month';
+        loadFuelSection(ds);
+      } else {
+        const t=await r.text();let msg=r.status+'';try{const j=JSON.parse(t);msg=j.message||msg;}catch(e){}
+        showToast('⚠️ 刪除失敗：'+msg);
+      }
+    }catch(e){showToast('⚠️ 網路錯誤：'+e.message);}
+  });
 }
 
 function exportCSV(){if(!logs.length){showToast('尚無資料可匯出');return;}const rows=[['日期','時間','員工','打卡類型','工作項目','跑車金額','里程km','工時min']];logs.forEach(l=>rows.push([l.date,l.time,l.name,l.type==='in'?'上班':'下班',l.detail||'',l.amount||'',l.km||'',l.workMins||'']));const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\uFEFF'+rows.map(r=>r.join(',')).join('\n')],{type:'text/csv;charset=utf-8;'}));a.download='打卡紀錄_'+new Date().toLocaleDateString('zh-TW').replace(/\//g,'-')+'.csv';a.click();showToast('CSV 匯出成功！');}
