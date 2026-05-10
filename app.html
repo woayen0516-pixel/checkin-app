@@ -844,6 +844,7 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--fi);
       <div class="wcard"><div class="wcard-num" id="fourNKmNum">—</div><div class="wcard-lbl">總里程 KM</div></div>
       <div class="wcard"><div class="wcard-num orange" id="fourNAvgNum">—</div><div class="wcard-lbl">平均每趟</div></div>
       <div class="wcard"><div class="wcard-num blue" id="fourNPerKmNum">—</div><div class="wcard-lbl">每公里收益</div></div>
+      <div class="wcard"><div class="wcard-num" id="fourNHourlyNum">—</div><div class="wcard-lbl">平均時薪</div></div>
     </div>
     <div class="acc-block acc-lime" style="margin-bottom:10px">
       <div class="acc-eyebrow">每公里收益</div>
@@ -1193,27 +1194,44 @@ async function testConnection(){
   }catch(e){document.getElementById('syncDot').style.background='#ff453a';showToast('⚠️ 連線異常：'+e.message);return false;}
 }
 function setupRealtime(){
-  let lastLogTs=0,lastEvId=0,lastMemoId=0;
+  let lastLogTs=0,lastEvId=0,lastMemoId=0,lastMemoCount=0;
   setInterval(async()=>{
-    try{const r=await fetch(SB+'/rest/v1/logs?select=ts&order=ts.desc&limit=1',{headers:SBH});if(r.ok){const d=await r.json();const v=d[0]?.ts||0;if(v&&v!==lastLogTs){lastLogTs=v;loadLogs();}}}catch(e){}
-    try{const r=await fetch(SB+'/rest/v1/events?select=id&order=id.desc&limit=1',{headers:SBH});if(r.ok){const d=await r.json();const v=d[0]?.id||0;if(v&&v!==lastEvId){lastEvId=v;loadEvents();}}}catch(e){}
-    try{const r=await fetch(SB+'/rest/v1/memos?select=id&order=id.desc&limit=1',{headers:SBH});if(r.ok){const d=await r.json();const v=d[0]?.id||0;if(v&&v!==lastMemoId){lastMemoId=v;loadMemos();}}}catch(e){}
-  },15000);
+    try{
+      const r=await fetch(SB+'/rest/v1/logs?select=ts&order=ts.desc&limit=1',{headers:SBH});
+      if(r.ok){const d=await r.json();const v=d[0]?.ts||0;if(v&&v!==lastLogTs){lastLogTs=v;loadLogs();}}
+    }catch(e){}
+    try{
+      const r=await fetch(SB+'/rest/v1/events?select=id&order=id.desc&limit=1',{headers:SBH});
+      if(r.ok){const d=await r.json();const v=d[0]?.id||0;if(v&&v!==lastEvId){lastEvId=v;loadEvents();}}
+    }catch(e){}
+    try{
+      // Compare both latest id AND count to detect edits and deletes
+      const r=await fetch(SB+'/rest/v1/memos?select=id&order=id.desc',{headers:SBH});
+      if(r.ok){
+        const d=await r.json();
+        const v=d[0]?.id||0;
+        const cnt=d.length;
+        if(v!==lastMemoId||cnt!==lastMemoCount){lastMemoId=v;lastMemoCount=cnt;loadMemos();}
+      }
+    }catch(e){}
+  },5000);
 }
 
 // ── Load from Supabase ────────────────────────────────────────────
 async function loadLogs() {
-  const rows = await sbFetch('logs');
+  const rows = await sbFetch('logs','*','ts','desc',1000);
   logs = rows.map(r => ({
     emp: r.emp, name: r.name, type: r.type, time: r.time, date: r.date,
     detail: r.detail||'', amount: r.amount||0, km: r.km||0,
     workMins: r.work_mins||0, ts: r.ts, _id: r.id
   }));
+  // Sort newest first consistently across devices
+  logs.sort((a,b)=>b.ts-a.ts);
   // Restore today's status
   const ds = new Date().toLocaleDateString('zh-TW');
   ['A','B'].forEach(emp => {
     const tl = logs.filter(l => l.emp===emp && l.date===ds);
-    if (tl.length) empStatus[emp] = tl[tl.length-1].type==='in' ? 'in' : 'out';
+    if (tl.length) empStatus[emp] = tl[0].type==='in' ? 'in' : 'out';
     else empStatus[emp] = 'out';
   });
   updateStatusUI();
@@ -1236,12 +1254,12 @@ async function loadEvents() {
 }
 
 async function loadMemos() {
-  const rows = await sbFetch('memos');
+  const rows = await sbFetch('memos','*','id','desc',1000);
   memos = rows.map(r => ({
     who: r.who, text: r.text, date: r.date, time: r.time,
     id: r.memo_id, _id: r.id,
     color: r.color||'white', size: r.size||'full'
-  })).reverse();
+  }));
   if (curPage==='memo') renderMemos(curMemoFilter);
   showSyncPulse();
 }
@@ -1514,12 +1532,19 @@ function doCheckin(){
       if(trips>0)pts.push(trips+'趟');
       if(km>0)pts.push(km+'km');
       detail=pts.join(' · ');
-      window._4nTripsToday=trips; // store for report
+      window._4nTripsToday=trips;
       window._kmStart=0;
     }
   }
   let workMins=0;
-  if(type==='out'){const li=[...logs].reverse().find(l=>l.emp===currentEmp&&l.type==='in'&&l.date===date);if(li){const[ih,im]=li.time.split(':').map(Number);const[oh,om]=time.split(':').map(Number);workMins=Math.max(0,(oh*60+om)-(ih*60+im));}}
+  if(type==='out'){
+    // Find last clock-in regardless of date (supports cross-day shifts)
+    const li=logs.find(l=>l.emp===currentEmp&&l.type==='in');
+    if(li){
+      const inTs=li.ts;
+      workMins=Math.max(0,Math.round((now.getTime()-inTs)/60000));
+    }
+  }
   const newLog = {emp:currentEmp,name,type,time,date,detail,amount,km,workMins,ts:now.getTime()};
   logs.push(newLog);
   empStatus[currentEmp]=type==='in'?'in':'out';
@@ -1987,13 +2012,18 @@ function closeAddMemo(){document.getElementById('addMemoModal').classList.remove
 function selectMemoColor(c,el){_memoColor=c;document.querySelectorAll('#memoColorPicker .color-dot').forEach(d=>d.classList.remove('sel'));el.classList.add('sel');}
 function selectEditMemoColor(c,el){_editMemoColor=c;document.querySelectorAll('#editMemoColorPicker .color-dot').forEach(d=>d.classList.remove('sel'));el.classList.add('sel');}
 function selectMemoSize(s,el){_memoSize=s;document.querySelectorAll('.size-opt').forEach(d=>d.classList.remove('sel'));el.classList.add('sel');}
-function addMemo(){
+async function addMemo(){
   const text=document.getElementById('memoText').value.trim();if(!text){showToast('請輸入備忘內容');return;}
   const now=new Date();
   const m={who:document.getElementById('memoWho').value,text,date:now.toLocaleDateString('zh-TW'),time:now.toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'}),id:now.getTime(),color:_memoColor||'white',size:_memoSize||'full'};
   memos.unshift(m);
-  sbInsert('memos',{who:m.who,text:m.text,date:m.date,time:m.time,memo_id:m.id,color:m.color,size:m.size});
-  closeAddMemo();renderMemos(curMemoFilter);showToast('備忘已儲存！');
+  closeAddMemo();renderMemos(curMemoFilter);
+  const res=await sbInsert('memos',{who:m.who,text:m.text,date:m.date,time:m.time,memo_id:m.id,color:m.color,size:m.size});
+  if(res&&res[0]){
+    const idx=memos.findIndex(x=>x.id===m.id);
+    if(idx>=0)memos[idx]._id=res[0].id;
+  }
+  showToast('備忘已儲存！');
 }
 function renderMemos(filter){
   curMemoFilter=filter;
@@ -2071,10 +2101,16 @@ function saveEditMemo(){
   if(idx<0){showToast('找不到備忘');return;}
   const text=document.getElementById('editMemoText').value.trim();
   if(!text){showToast('請輸入內容');return;}
-  memos[idx].text=text;memos[idx].who=document.getElementById('editMemoWho').value;memos[idx].color=_editMemoColor||'white';
+  memos[idx].text=text;
+  memos[idx].who=document.getElementById('editMemoWho').value;
+  memos[idx].color=_editMemoColor||'white';
   const m=memos[idx];
-  if(m._id)sbUpdate('memos','id',m._id,{text:m.text,who:m.who,color:m.color});
-  else sbUpdate('memos','memo_id',m.id,{text:m.text,who:m.who,color:m.color});
+  const payload={text:m.text,who:m.who,color:m.color};
+  if(m._id){
+    sbUpdate('memos','id',m._id,payload);
+  } else {
+    sbUpdate('memos','memo_id',m.id,payload);
+  }
   closeEditMemo();renderMemos(curMemoFilter);showToast('備忘已更新！');
 }
 function deleteMemoById(id){deleteMemo(id);}
@@ -2204,13 +2240,18 @@ function updateReport(){
   const avgPerTrip=fourNTrips>0?Math.round(fourNAmt/fourNTrips):0;
   const perKm=fourNKm>0?Math.round(fourNAmt/fourNKm*10)/10:0;
 
-  // 4N hero
+  // 時薪：每筆下班紀錄的 amount ÷ workMins × 60，取有效紀錄的平均
+  const hourlyRates=fourNLogs.filter(l=>l.type==='out'&&l.amount>0&&l.workMins>0)
+    .map(l=>Math.round(l.amount/l.workMins*60));
+  const avgHourly=hourlyRates.length>0?Math.round(hourlyRates.reduce((s,v)=>s+v,0)/hourlyRates.length):0;
+
   const fh=document.getElementById('fourNHeroNum');if(fh)fh.textContent='$'+fourNAmt.toLocaleString();
   const fs=document.getElementById('fourNHeroSub');if(fs)fs.textContent='共 '+fourNTrips+' 趟 · 平均 $'+avgPerTrip.toLocaleString()+'／趟';
   const ft=document.getElementById('fourNTripsNum');if(ft){ft.textContent=fourNTrips;ft.className='wcard-num lime';}
   const fk=document.getElementById('fourNKmNum');if(fk)fk.textContent=fourNKm.toLocaleString();
   const fa=document.getElementById('fourNAvgNum');if(fa){fa.textContent='$'+avgPerTrip.toLocaleString();fa.className='wcard-num orange';}
   const fp=document.getElementById('fourNPerKmNum');if(fp){fp.textContent='$'+perKm;fp.className='wcard-num blue';}
+  const fhr=document.getElementById('fourNHourlyNum');if(fhr){fhr.textContent=avgHourly>0?'$'+avgHourly.toLocaleString()+'／hr':'—';fhr.className='wcard-num';}
   const fpb=document.getElementById('fourNPerKmBig');if(fpb)fpb.innerHTML='$'+perKm+'<span style="font-size:18px;opacity:0.4">/km</span>';
   const fps=document.getElementById('fourNPerKmSub');if(fps)fps.textContent='出勤 '+fourNDays+' 天 · 平均 $'+(fourNDays>0?Math.round(fourNAmt/fourNDays).toLocaleString():0)+'／天';
 
