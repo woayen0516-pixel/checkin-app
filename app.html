@@ -635,18 +635,17 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--fi);
     <button class="notif-allow-btn" onclick="requestNotif()">開啟</button>
   </div>
   <div class="cal-date-hero">
-    <div style="display:flex;align-items:flex-start;justify-content:space-between">
-      <div class="cal-day-big" id="calTodayNum">6</div>
-      <div style="padding-top:10px">
-        <div class="cal-dow" id="calTodayDow">TUE</div>
-        <div class="cal-year" id="calTodayYear">2026</div>
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:6px">
+      <div>
+        <div style="font-family:var(--fi);font-size:22px;font-weight:900;color:#111;letter-spacing:-0.01em;line-height:1;margin-bottom:2px" id="calHeroMonth">MAY · 5</div>
+        <div class="cal-day-big" id="calTodayNum">7</div>
       </div>
-    </div>
-    <div class="cal-month-row">
-      <div class="cal-month-name" id="calTitle">MAY</div>
-      <div class="cal-nav-row">
-        <button class="cal-nav-btn" onclick="changeMonth(-1)">‹</button>
-        <button class="cal-nav-btn" onclick="changeMonth(1)">›</button>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;padding-bottom:8px;gap:8px">
+        <div style="display:flex;gap:6px">
+          <button class="cal-nav-btn" onclick="changeMonth(-1)">‹</button>
+          <button class="cal-nav-btn" onclick="changeMonth(1)">›</button>
+        </div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--g3)" id="calTodayYear">2026</div>
       </div>
     </div>
   </div>
@@ -753,14 +752,31 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--fi);
 <div class="memo-bg">
   <div class="memo-top">
     <div class="sec-h" style="margin-bottom:0">備忘錄</div>
-    <button class="add-small-btn" onclick="openAddMemo()">＋ 新增</button>
+    <button class="add-small-btn" onclick="openAddMemoSheet()">＋</button>
   </div>
-  <div class="memo-filter-row">
-    <button class="filter-pill active" onclick="renderMemos('all');setMemoFilter(this)">全部</button>
-    <button class="filter-pill" onclick="renderMemos('A');setMemoFilter(this)">Yen 🐸</button>
-    <button class="filter-pill" onclick="renderMemos('B');setMemoFilter(this)">4N 🐵</button>
+  <!-- Tab row - underline style -->
+  <div style="display:flex;gap:24px;margin-bottom:16px;border-bottom:1.5px solid var(--g1);padding-bottom:0">
+    <button id="memoTabMemo" onclick="switchMemoTab('memo',this)" style="background:none;border:none;border-bottom:2.5px solid var(--w);margin-bottom:-1.5px;padding:0 2px 10px;font-size:15px;font-weight:700;color:var(--w);cursor:pointer;font-family:var(--fi);letter-spacing:0.01em">便利貼</button>
+    <button id="memoTabTodo" onclick="switchMemoTab('todo',this)" style="background:none;border:none;border-bottom:2.5px solid transparent;margin-bottom:-1.5px;padding:0 2px 10px;font-size:15px;font-weight:500;color:var(--g3);cursor:pointer;font-family:var(--fi);letter-spacing:0.01em">待辦清單</button>
   </div>
-  <div id="memoList"></div>
+  <!-- 便利貼 panel -->
+  <div id="memoPanelMemo">
+    <div class="memo-filter-row">
+      <button class="filter-pill active" onclick="renderMemos('all');setMemoFilter(this)">全部</button>
+      <button class="filter-pill" onclick="renderMemos('A');setMemoFilter(this)">Yen 🐸</button>
+      <button class="filter-pill" onclick="renderMemos('B');setMemoFilter(this)">4N 🐵</button>
+    </div>
+    <div id="memoList"></div>
+  </div>
+  <!-- 待辦 panel -->
+  <div id="memoPanelTodo" style="display:none">
+    <div class="memo-filter-row">
+      <button class="filter-pill active" id="tdFilter-all" onclick="filterTodo('all',this)">全部</button>
+      <button class="filter-pill" id="tdFilter-A" onclick="filterTodo('A',this)">Yen 🐸</button>
+      <button class="filter-pill" id="tdFilter-B" onclick="filterTodo('B',this)">4N 🐵</button>
+    </div>
+    <div id="todoList"></div>
+  </div>
 </div>
 </div>
 
@@ -806,7 +822,7 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--fi);
   <!-- YEN panel -->
   <div id="panel-yen">
     <div class="acc-block acc-dark" id="yenHeroBlock">
-      <div class="acc-eyebrow">本月總工時</div>
+      <div class="acc-eyebrow">總工時</div>
       <div class="acc-num" id="yenHeroNum">—</div>
       <div class="acc-sub" id="yenHeroSub">—</div>
     </div>
@@ -835,7 +851,7 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--fi);
   <!-- 4N panel -->
   <div id="panel-4n" style="display:none">
     <div class="acc-block acc-orange" id="fourNHeroBlock">
-      <div class="acc-eyebrow">本月跑車收入</div>
+      <div class="acc-eyebrow">跑車收入</div>
       <div class="acc-num" id="fourNHeroNum">—</div>
       <div class="acc-sub" id="fourNHeroSub">—</div>
     </div>
@@ -843,7 +859,6 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--fi);
       <div class="wcard"><div class="wcard-num lime" id="fourNTripsNum">—</div><div class="wcard-lbl">總趟數</div></div>
       <div class="wcard"><div class="wcard-num" id="fourNKmNum">—</div><div class="wcard-lbl">總里程 KM</div></div>
       <div class="wcard"><div class="wcard-num orange" id="fourNAvgNum">—</div><div class="wcard-lbl">平均每趟</div></div>
-      <div class="wcard"><div class="wcard-num blue" id="fourNPerKmNum">—</div><div class="wcard-lbl">每公里收益</div></div>
       <div class="wcard"><div class="wcard-num" id="fourNHourlyNum">—</div><div class="wcard-lbl">平均時薪</div></div>
     </div>
     <div class="acc-block acc-lime" style="margin-bottom:10px">
@@ -881,25 +896,64 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--fi);
 </div>
 
 <!-- ── PAGE: QR ── -->
-<div id="page-qr" class="page">
+<div id="page-oilprice" class="page">
 <div class="page-pad">
-  <div class="sec-h">QR Code</div>
-  <div class="qr-cards">
-    <div class="qr-card"><canvas id="qrA"></canvas><div class="qr-name">Yen 🐸</div></div>
-    <div class="qr-card"><canvas id="qrB"></canvas><div class="qr-name">4N 🐵</div></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+    <div class="sec-h" style="margin-bottom:0">⛽ 當日油價</div>
+    <button onclick="loadOilPrice()" style="background:var(--s3);color:var(--g5);border:none;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--mono)">↺ 更新</button>
   </div>
-  <div class="qr-scan-area">
-    <div class="video-wrap" id="videoWrap" style="display:none"><video id="qrVideo" playsinline muted></video></div>
-    <div class="scan-ok" id="scanOkQR"></div>
-    <div class="manual-input">
-      <input class="form-input" type="text" id="manualCode" placeholder="手動輸入代碼" style="flex:1">
-      <button onclick="manualCheckin()" style="background:var(--w);color:#fff;border:none;border-radius:var(--r-sm);padding:12px 16px;font-size:14px;font-family:var(--fi);font-weight:600;cursor:pointer">確認</button>
-    </div>
+  <div id="oilPriceContent">
+    <div style="font-size:12px;color:var(--g3);text-align:center;padding:40px 0">點擊更新載入油價</div>
   </div>
 </div>
 </div>
 
 </div><!-- scroll end -->
+
+<!-- Add Type Picker (便利貼 or 待辦) -->
+<div class="modal-overlay" id="addTypeModal">
+  <div class="modal-sheet" style="padding-bottom:calc(20px + var(--safe-b))">
+    <div class="modal-handle"></div>
+    <div class="modal-title" style="margin-bottom:16px">新增</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <button onclick="closeAddTypeModal();openAddMemo()" style="background:var(--s3);border:none;border-radius:16px;padding:20px 12px;cursor:pointer;text-align:center">
+        <div style="font-size:28px;margin-bottom:8px">🗒</div>
+        <div style="font-size:14px;font-weight:700;color:var(--w)">便利貼</div>
+        <div style="font-size:11px;color:var(--g3);margin-top:4px">新增備忘紙條</div>
+      </button>
+      <button onclick="closeAddTypeModal();openAddTodo()" style="background:var(--s3);border:none;border-radius:16px;padding:20px 12px;cursor:pointer;text-align:center">
+        <div style="font-size:28px;margin-bottom:8px">☑️</div>
+        <div style="font-size:14px;font-weight:700;color:var(--w)">待辦清單</div>
+        <div style="font-size:11px;color:var(--g3);margin-top:4px">新增待辦事項</div>
+      </button>
+    </div>
+    <button onclick="closeAddTypeModal()" style="width:100%;margin-top:12px;background:transparent;border:1.5px solid var(--g1);border-radius:12px;padding:12px;font-size:14px;color:var(--g4);cursor:pointer;font-family:var(--fi)">取消</button>
+  </div>
+</div>
+
+<!-- Todo Add Modal -->
+<div class="modal-overlay" id="addTodoModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">新增待辦</div>
+    <div style="margin-bottom:12px">
+      <label class="form-label">內容</label>
+      <textarea id="todoText" class="memo-textarea" placeholder="待辦事項..." rows="3"></textarea>
+    </div>
+    <div style="margin-bottom:16px">
+      <label class="form-label">負責人</label>
+      <select id="todoWho" class="form-input" style="height:44px">
+        <option value="A">Yen 🐸</option>
+        <option value="B">4N 🐵</option>
+        <option value="both">全部</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="cancel-btn" onclick="closeAddTodo()">取消</button>
+      <button class="confirm-btn" onclick="saveTodo()">儲存</button>
+    </div>
+  </div>
+</div>
 
 <!-- Drawer -->
 <div class="drawer-dim" id="drawerDim" onclick="closeDrawer()"></div>
@@ -911,7 +965,7 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:var(--fi);
   <div class="drawer-item" id="di-memo" onclick="drawerNav('memo')"><div class="di-icon">✎</div><div class="di-text">備忘錄</div></div>
   <div class="drawer-divider"></div>
   <div class="drawer-item" id="di-report" onclick="drawerNav('report')"><div class="di-icon">↗</div><div class="di-text">報表</div></div>
-  <div class="drawer-item" id="di-qr" onclick="drawerNav('qr')"><div class="di-icon">⬛</div><div class="di-text">QR Code</div></div>
+  <div class="drawer-item" id="di-oilprice" onclick="drawerNav('oilprice')"><div class="di-icon">⛽</div><div class="di-text">當日油價</div></div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -1194,44 +1248,30 @@ async function testConnection(){
   }catch(e){document.getElementById('syncDot').style.background='#ff453a';showToast('⚠️ 連線異常：'+e.message);return false;}
 }
 function setupRealtime(){
-  let lastLogTs=0,lastEvId=0,lastMemoId=0,lastMemoCount=0;
+  let lastLogTs=0,lastEvId=0,lastMemoSig='';
   setInterval(async()=>{
+    try{const r=await fetch(SB+'/rest/v1/logs?select=ts&order=ts.desc&limit=1',{headers:SBH});if(r.ok){const d=await r.json();const v=d[0]?.ts||0;if(v&&v!==lastLogTs){lastLogTs=v;loadLogs();}}}catch(e){}
+    try{const r=await fetch(SB+'/rest/v1/events?select=id&order=id.desc&limit=1',{headers:SBH});if(r.ok){const d=await r.json();const v=d[0]?.id||0;if(v&&v!==lastEvId){lastEvId=v;loadEvents();}}}catch(e){}
     try{
-      const r=await fetch(SB+'/rest/v1/logs?select=ts&order=ts.desc&limit=1',{headers:SBH});
-      if(r.ok){const d=await r.json();const v=d[0]?.ts||0;if(v&&v!==lastLogTs){lastLogTs=v;loadLogs();}}
-    }catch(e){}
-    try{
-      const r=await fetch(SB+'/rest/v1/events?select=id&order=id.desc&limit=1',{headers:SBH});
-      if(r.ok){const d=await r.json();const v=d[0]?.id||0;if(v&&v!==lastEvId){lastEvId=v;loadEvents();}}
-    }catch(e){}
-    try{
-      // Compare both latest id AND count to detect edits and deletes
-      const r=await fetch(SB+'/rest/v1/memos?select=id&order=id.desc',{headers:SBH});
-      if(r.ok){
-        const d=await r.json();
-        const v=d[0]?.id||0;
-        const cnt=d.length;
-        if(v!==lastMemoId||cnt!==lastMemoCount){lastMemoId=v;lastMemoCount=cnt;loadMemos();}
-      }
+      const r=await fetch(SB+'/rest/v1/memos?select=id,updated_at&order=updated_at.desc',{headers:SBH});
+      if(r.ok){const d=await r.json();const sig=d.map(x=>x.id+'|'+(x.updated_at||'')).join(',');if(sig!==lastMemoSig){lastMemoSig=sig;loadMemos();}}
     }catch(e){}
   },5000);
 }
 
 // ── Load from Supabase ────────────────────────────────────────────
 async function loadLogs() {
-  const rows = await sbFetch('logs','*','ts','desc',1000);
+  const rows = await sbFetch('logs');
   logs = rows.map(r => ({
     emp: r.emp, name: r.name, type: r.type, time: r.time, date: r.date,
     detail: r.detail||'', amount: r.amount||0, km: r.km||0,
     workMins: r.work_mins||0, ts: r.ts, _id: r.id
   }));
-  // Sort newest first consistently across devices
-  logs.sort((a,b)=>b.ts-a.ts);
   // Restore today's status
   const ds = new Date().toLocaleDateString('zh-TW');
   ['A','B'].forEach(emp => {
     const tl = logs.filter(l => l.emp===emp && l.date===ds);
-    if (tl.length) empStatus[emp] = tl[0].type==='in' ? 'in' : 'out';
+    if (tl.length) empStatus[emp] = tl[tl.length-1].type==='in' ? 'in' : 'out';
     else empStatus[emp] = 'out';
   });
   updateStatusUI();
@@ -1271,7 +1311,7 @@ async function initData() {
     showToast('⚠️ 無法連線，請檢查網路');
     return;
   }
-  await Promise.all([loadLogs(), loadEvents(), loadMemos()]);
+  await Promise.all([loadLogs(), loadEvents(), loadMemos(), loadTodos()]);
   setupRealtime();
   showToast('✓ 資料同步完成');
 }
@@ -1326,9 +1366,11 @@ function showPage(name){
   // Show/hide calendar FAB
   const fab=document.getElementById('calFab');
   if(fab)fab.classList.toggle('visible',name==='calendar');
-  if(name==='qr')generateQRCodes();if(name==='report'){setReportTab(document.getElementById('reportTab')?document.getElementById('reportTab').value||'yen':'yen');updateReport();}
+  if(name==='report'){setReportTab(document.getElementById('reportTab')?document.getElementById('reportTab').value||'yen':'yen');updateReport();}
   if(name==='calendar'){checkNotifPermission();renderCalendar();}
-  if(name==='memo')renderMemos(curMemoFilter);if(name==='records')updateLogList(curFilter);
+  if(name==='memo'){renderMemos(curMemoFilter);loadTodos();}
+  if(name==='records')updateLogList(curFilter);
+  if(name==='oilprice')loadOilPrice();
 }
 function drawerNav(name){showPage(name);closeDrawer();}
 function toggleDrawer(){
@@ -1532,19 +1574,12 @@ function doCheckin(){
       if(trips>0)pts.push(trips+'趟');
       if(km>0)pts.push(km+'km');
       detail=pts.join(' · ');
-      window._4nTripsToday=trips;
+      window._4nTripsToday=trips; // store for report
       window._kmStart=0;
     }
   }
   let workMins=0;
-  if(type==='out'){
-    // Find last clock-in regardless of date (supports cross-day shifts)
-    const li=logs.find(l=>l.emp===currentEmp&&l.type==='in');
-    if(li){
-      const inTs=li.ts;
-      workMins=Math.max(0,Math.round((now.getTime()-inTs)/60000));
-    }
-  }
+  if(type==='out'){const li=[...logs].reverse().find(l=>l.emp===currentEmp&&l.type==='in'&&l.date===date);if(li){const[ih,im]=li.time.split(':').map(Number);const[oh,om]=time.split(':').map(Number);workMins=Math.max(0,(oh*60+om)-(ih*60+im));}}
   const newLog = {emp:currentEmp,name,type,time,date,detail,amount,km,workMins,ts:now.getTime()};
   logs.push(newLog);
   empStatus[currentEmp]=type==='in'?'in':'out';
@@ -1674,10 +1709,13 @@ function genPat(seed){let h=0;for(let i=0;i<seed.length;i++)h=(h*31+seed.charCod
 
 function renderCalendar(){
   const monthNames=['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
-  document.getElementById('calTitle').textContent=monthNames[calMonth];
-  document.getElementById('calTodayNum').textContent=calMonth===new Date().getMonth()&&calYear===new Date().getFullYear()?new Date().getDate():1;
+  const monthShort=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  const heroM=document.getElementById('calHeroMonth');
+  if(heroM)heroM.textContent=monthShort[calMonth]+' · '+(calMonth+1);
+  const calTitle=document.getElementById('calTitle');if(calTitle)calTitle.textContent=monthNames[calMonth];
+  const todayD=new Date();
+  document.getElementById('calTodayNum').textContent=(calMonth===todayD.getMonth()&&calYear===todayD.getFullYear())?todayD.getDate():1;
   document.getElementById('calTodayYear').textContent=calYear;
-  document.getElementById('calTodayDow').textContent=['SUN','MON','TUE','WED','THU','FRI','SAT'][new Date().getDay()];
   document.getElementById('calLabels').innerHTML=['S','M','T','W','T','F','S'].map(d=>`<div class="cal-dl">${d}</div>`).join('');
   const grid=document.getElementById('calGrid');
   const first=new Date(calYear,calMonth,1).getDay();
@@ -2019,10 +2057,7 @@ async function addMemo(){
   memos.unshift(m);
   closeAddMemo();renderMemos(curMemoFilter);
   const res=await sbInsert('memos',{who:m.who,text:m.text,date:m.date,time:m.time,memo_id:m.id,color:m.color,size:m.size});
-  if(res&&res[0]){
-    const idx=memos.findIndex(x=>x.id===m.id);
-    if(idx>=0)memos[idx]._id=res[0].id;
-  }
+  if(res&&res[0]){const idx=memos.findIndex(x=>x.id===m.id);if(idx>=0)memos[idx]._id=res[0].id;}
   showToast('備忘已儲存！');
 }
 function renderMemos(filter){
@@ -2101,16 +2136,11 @@ function saveEditMemo(){
   if(idx<0){showToast('找不到備忘');return;}
   const text=document.getElementById('editMemoText').value.trim();
   if(!text){showToast('請輸入內容');return;}
-  memos[idx].text=text;
-  memos[idx].who=document.getElementById('editMemoWho').value;
-  memos[idx].color=_editMemoColor||'white';
+  memos[idx].text=text;memos[idx].who=document.getElementById('editMemoWho').value;memos[idx].color=_editMemoColor||'white';
   const m=memos[idx];
-  const payload={text:m.text,who:m.who,color:m.color};
-  if(m._id){
-    sbUpdate('memos','id',m._id,payload);
-  } else {
-    sbUpdate('memos','memo_id',m.id,payload);
-  }
+  const payload={text:m.text,who:m.who,color:m.color,updated_at:new Date().toISOString()};
+  if(m._id)sbUpdate('memos','id',m._id,payload);
+  else sbUpdate('memos','memo_id',m.id,payload);
   closeEditMemo();renderMemos(curMemoFilter);showToast('備忘已更新！');
 }
 function deleteMemoById(id){deleteMemo(id);}
@@ -2125,6 +2155,129 @@ function moveMemo(id,dir){
   renderMemos(curMemoFilter);
 }
 function filterMemo(filter,btn){document.querySelectorAll('#page-memo .filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderMemos(filter);}
+
+// ── Memo Tab ──────────────────────────────────────────────────
+let curMemoTab='memo';
+function switchMemoTab(tab,btn){
+  curMemoTab=tab;
+  // Reset both tabs
+  ['memoTabMemo','memoTabTodo'].forEach(id=>{
+    const b=document.getElementById(id);if(!b)return;
+    b.style.borderBottom='2.5px solid transparent';
+    b.style.color='var(--g3)';b.style.fontWeight='500';
+  });
+  // Activate selected
+  if(btn){btn.style.borderBottom='2.5px solid var(--w)';btn.style.color='var(--w)';btn.style.fontWeight='700';}
+  document.getElementById('memoPanelMemo').style.display=tab==='memo'?'block':'none';
+  document.getElementById('memoPanelTodo').style.display=tab==='todo'?'block':'none';
+  if(tab==='todo')renderTodos(curTodoFilter);
+}
+function openAddMemoSheet(){
+  if(curMemoTab==='memo')openAddMemo();
+  else openAddTodo();
+}
+function closeAddTypeModal(){document.getElementById('addTypeModal').classList.remove('show');}
+
+// ── To-Do ─────────────────────────────────────────────────────
+let todos=[],curTodoFilter='all';
+async function loadTodos(){
+  const rows=await sbFetch('todos','*','id','desc',500);
+  todos=rows.map(r=>({id:r.id,text:r.text,who:r.who||'both',done:r.done||false}));
+  if(curPage==='memo'&&curMemoTab==='todo')renderTodos(curTodoFilter);
+}
+function openAddTodo(){document.getElementById('todoText').value='';document.getElementById('addTodoModal').classList.add('show');}
+function closeAddTodo(){document.getElementById('addTodoModal').classList.remove('show');}
+async function saveTodo(){
+  const text=document.getElementById('todoText').value.trim();if(!text){showToast('請輸入待辦內容');return;}
+  const who=document.getElementById('todoWho').value;
+  const res=await sbInsert('todos',{text,who,done:false});
+  if(res&&res[0])todos.unshift({id:res[0].id,text,who,done:false});
+  closeAddTodo();renderTodos(curTodoFilter);showToast('待辦已新增！');
+}
+function filterTodo(f,btn){
+  curTodoFilter=f;
+  document.querySelectorAll('[id^="tdFilter-"]').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  renderTodos(f);
+}
+function renderTodos(filter){
+  const el=document.getElementById('todoList');if(!el)return;
+  const filtered=filter==='all'?todos:todos.filter(t=>t.who===filter||t.who==='both');
+  if(!filtered.length){el.innerHTML='<div class="empty">尚無待辦事項</div>';return;}
+  const wn={A:'Yen 🐸',B:'4N 🐵',both:'全部'};
+  const done=filtered.filter(t=>t.done),undone=filtered.filter(t=>!t.done);
+  const mkCard=t=>`<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--s2);border-radius:12px;margin-bottom:8px;box-shadow:var(--shadow)">
+    <div onclick="toggleTodo(${t.id})" style="width:22px;height:22px;border-radius:50%;border:2px solid ${t.done?'var(--green)':'var(--g2)'};background:${t.done?'var(--green)':'transparent'};display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all 0.2s">${t.done?'<span style="color:#fff;font-size:12px;line-height:1">✓</span>':''}</div>
+    <div style="flex:1">
+      <div style="font-size:14px;color:${t.done?'var(--g3)':'var(--w)'};text-decoration:${t.done?'line-through':'none'};font-weight:500">${t.text}</div>
+      <div style="font-size:10px;color:var(--g3);font-family:var(--mono);margin-top:2px">${wn[t.who]||t.who}</div>
+    </div>
+    <span onclick="deleteTodo(${t.id})" style="font-size:16px;color:#ccc;cursor:pointer;padding:4px">✕</span>
+  </div>`;
+  el.innerHTML=undone.map(mkCard).join('')+(done.length?'<div style="font-size:10px;color:var(--g3);font-family:var(--mono);letter-spacing:0.06em;margin:12px 0 8px">已完成</div>'+done.map(mkCard).join(''):'');
+}
+async function toggleTodo(id){const idx=todos.findIndex(t=>t.id===id);if(idx<0)return;todos[idx].done=!todos[idx].done;await sbUpdate('todos','id',id,{done:todos[idx].done});renderTodos(curTodoFilter);}
+async function deleteTodo(id){askDelete('確定刪除這個待辦？',async()=>{await sbDelete('todos','id',id);todos=todos.filter(t=>t.id!==id);renderTodos(curTodoFilter);showToast('待辦已刪除');});}
+
+// ── Oil Price ─────────────────────────────────────────────────
+let _lastOilPrices=null;
+async function loadOilPrice(){
+  const el=document.getElementById('oilPriceContent');if(!el)return;
+  el.innerHTML='<div style="font-size:12px;color:var(--g3);text-align:center;padding:40px 0">載入中...</div>';
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',max_tokens:1000,
+        tools:[{type:'web_search_20250305',name:'web_search'}],
+        messages:[{role:'user',content:'查詢台灣中油今日最新油價和上週油價（用於對比），只回傳JSON，格式：{"date":"今日日期","92":今日價,"95":今日價,"98":今日價,"diesel":今日價,"prev92":上週價,"prev95":上週價,"prev98":上週價,"prevDiesel":上週價}，所有價格為數字，不含單位'}]
+      })
+    });
+    if(!res.ok)throw new Error('API error '+res.status);
+    const data=await res.json();
+    const txt=data.content.filter(c=>c.type==='text').map(c=>c.text).join('');
+    let p=null;try{const m=txt.match(/\{[\s\S]*?\}/);if(m)p=JSON.parse(m[0]);}catch(e){}
+    if(!p)throw new Error('解析失敗');
+    _lastOilPrices=p;
+    renderOilPrice(el,p);
+  }catch(e){
+    el.innerHTML='<div style="font-size:13px;color:var(--g4);text-align:center;padding:20px 0">⚠️ '+e.message+'<br><span style="font-size:11px;color:var(--g3)">請稍後再試</span></div>';
+  }
+}
+function renderOilPrice(el,p){
+  function getDiff(cur,prev){
+    if(!prev||!cur)return null;
+    const c=parseFloat(String(cur).replace(/[^0-9.]/g,''));
+    const pv=parseFloat(String(prev).replace(/[^0-9.]/g,''));
+    if(isNaN(c)||isNaN(pv))return null;
+    return Math.round((c-pv)*10)/10;
+  }
+  function diffHTML(cur,prev){
+    const d=getDiff(cur,prev);
+    if(d===null)return '';
+    if(d===0)return '<div style="font-size:13px;font-weight:700;color:#222;font-family:var(--mono);margin-top:6px">持平 ±0</div>';
+    const up=d>0;
+    return `<div style="font-size:13px;font-weight:700;color:${up?'#dc2626':'#1d4ed8'};font-family:var(--mono);margin-top:6px">${up?'▲ 漲':'▼ 跌'} ${Math.abs(d)} 元</div>`;
+  }
+  const cards=[
+    {label:'92 無鉛',key:'92',prevKey:'prev92',color:'var(--w)'},
+    {label:'95 無鉛',key:'95',prevKey:'prev95',color:'#f97316'},
+    {label:'98 無鉛',key:'98',prevKey:'prev98',color:'#1d4ed8'},
+    {label:'柴油',key:'diesel',prevKey:'prevDiesel',color:'#16a34a'},
+  ];
+  el.innerHTML=`
+    <div style="font-size:10px;color:var(--g3);font-family:var(--mono);text-align:right;margin-bottom:10px">${p.date||''}　台灣中油</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      ${cards.map(c=>`<div style="background:var(--s2);border-radius:14px;padding:16px;box-shadow:var(--shadow)">
+        <div style="font-size:10px;color:var(--g3);font-family:var(--mono);margin-bottom:6px">${c.label}</div>
+        <div style="font-size:30px;font-weight:900;color:${c.color};line-height:1">$${p[c.key]||'—'}</div>
+        <div style="font-size:10px;color:var(--g3);font-family:var(--mono);margin-top:4px">元／公升</div>
+        ${diffHTML(p[c.key],p[c.prevKey])}
+        ${p[c.prevKey]?`<div style="font-size:10px;color:var(--g3);margin-top:4px">上週 $${p[c.prevKey]}</div>`:''}
+      </div>`).join('')}
+    </div>`;
+}
 
 function updateReport(){
   const ds=document.getElementById('reportRange')?document.getElementById('reportRange').value:'month';
@@ -2227,31 +2380,27 @@ function updateReport(){
 
   // ── 4N ────────────────────────────────────────────────────────
   const fourNLogs=filtered.filter(l=>l.emp==='B');
-  let fourNAmt=0,fourNTrips=0,fourNKm=0;
+  let fourNAmt=0,fourNTrips=0,fourNKm=0,totalWorkMins4N=0;
   fourNLogs.forEach(l=>{
     if(l.type==='out'){
       fourNAmt+=l.amount||0;
       const tripMatch=(l.detail||'').match(/([0-9]+)趟/);
       if(tripMatch)fourNTrips+=parseInt(tripMatch[1]);
       fourNKm+=l.km||0;
+      if((l.amount||0)>0&&(l.workMins||0)>0)totalWorkMins4N+=l.workMins;
     }
   });
   const fourNDays=new Set(fourNLogs.filter(l=>l.type==='in').map(l=>l.date)).size;
   const avgPerTrip=fourNTrips>0?Math.round(fourNAmt/fourNTrips):0;
   const perKm=fourNKm>0?Math.round(fourNAmt/fourNKm*10)/10:0;
-
-  // 時薪：每筆下班紀錄的 amount ÷ workMins × 60，取有效紀錄的平均
-  const hourlyRates=fourNLogs.filter(l=>l.type==='out'&&l.amount>0&&l.workMins>0)
-    .map(l=>Math.round(l.amount/l.workMins*60));
-  const avgHourly=hourlyRates.length>0?Math.round(hourlyRates.reduce((s,v)=>s+v,0)/hourlyRates.length):0;
+  const avgHourly=totalWorkMins4N>0?Math.round(fourNAmt/totalWorkMins4N*60):0;
 
   const fh=document.getElementById('fourNHeroNum');if(fh)fh.textContent='$'+fourNAmt.toLocaleString();
   const fs=document.getElementById('fourNHeroSub');if(fs)fs.textContent='共 '+fourNTrips+' 趟 · 平均 $'+avgPerTrip.toLocaleString()+'／趟';
   const ft=document.getElementById('fourNTripsNum');if(ft){ft.textContent=fourNTrips;ft.className='wcard-num lime';}
   const fk=document.getElementById('fourNKmNum');if(fk)fk.textContent=fourNKm.toLocaleString();
   const fa=document.getElementById('fourNAvgNum');if(fa){fa.textContent='$'+avgPerTrip.toLocaleString();fa.className='wcard-num orange';}
-  const fp=document.getElementById('fourNPerKmNum');if(fp){fp.textContent='$'+perKm;fp.className='wcard-num blue';}
-  const fhr=document.getElementById('fourNHourlyNum');if(fhr){fhr.textContent=avgHourly>0?'$'+avgHourly.toLocaleString()+'／hr':'—';fhr.className='wcard-num';}
+  const fhr=document.getElementById('fourNHourlyNum');if(fhr){fhr.textContent=avgHourly>0?'$'+avgHourly+'／hr':'—';fhr.className='wcard-num';}
   const fpb=document.getElementById('fourNPerKmBig');if(fpb)fpb.innerHTML='$'+perKm+'<span style="font-size:18px;opacity:0.4">/km</span>';
   const fps=document.getElementById('fourNPerKmSub');if(fps)fps.textContent='出勤 '+fourNDays+' 天 · 平均 $'+(fourNDays>0?Math.round(fourNAmt/fourNDays).toLocaleString():0)+'／天';
 
