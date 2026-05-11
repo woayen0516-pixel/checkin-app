@@ -1261,17 +1261,19 @@ function setupRealtime(){
 
 // ── Load from Supabase ────────────────────────────────────────────
 async function loadLogs() {
-  const rows = await sbFetch('logs');
+  const rows = await sbFetch('logs','*','ts','desc',1000);
   logs = rows.map(r => ({
     emp: r.emp, name: r.name, type: r.type, time: r.time, date: r.date,
     detail: r.detail||'', amount: r.amount||0, km: r.km||0,
     workMins: r.work_mins||0, ts: r.ts, _id: r.id
   }));
-  // Restore today's status
+  // Sort newest first
+  logs.sort((a,b)=>b.ts-a.ts);
+  // Restore today's status - use most recent log per employee
   const ds = new Date().toLocaleDateString('zh-TW');
   ['A','B'].forEach(emp => {
     const tl = logs.filter(l => l.emp===emp && l.date===ds);
-    if (tl.length) empStatus[emp] = tl[tl.length-1].type==='in' ? 'in' : 'out';
+    if (tl.length) empStatus[emp] = tl[0].type==='in' ? 'in' : 'out';
     else empStatus[emp] = 'out';
   });
   updateStatusUI();
@@ -1560,26 +1562,37 @@ function doCheckin(){
   }
   if(currentEmp==='B'){
     if(type==='in'){
-      // Store kmStart in session
-      window._kmStart=parseInt(document.getElementById('kmStart').value)||0;
+      const kmS=parseInt(document.getElementById('kmStart').value)||0;
+      window._kmStart=kmS;
+      // Also store in detail so it survives page refresh
+      detail='起始'+kmS+'km';
     }
     if(type==='out'){
       amount=parseInt(document.getElementById('carAmount').value)||0;
       const trips=parseInt(document.getElementById('tripCount').value)||0;
       const e=parseInt(document.getElementById('kmEnd').value)||0;
-      const s=window._kmStart||0;
+      // Try to get kmStart from session first, fallback to last clock-in detail
+      let s=window._kmStart||0;
+      if(!s){
+        const lastIn=logs.find(l=>l.emp==='B'&&l.type==='in');
+        if(lastIn&&lastIn.detail){const m=lastIn.detail.match(/起始(\d+)km/);if(m)s=parseInt(m[1]);}
+      }
       km=e>s?e-s:0;
       const pts=[];
       if(amount>0)pts.push('$'+amount.toLocaleString());
       if(trips>0)pts.push(trips+'趟');
       if(km>0)pts.push(km+'km');
       detail=pts.join(' · ');
-      window._4nTripsToday=trips; // store for report
+      window._4nTripsToday=trips;
       window._kmStart=0;
     }
   }
   let workMins=0;
-  if(type==='out'){const li=[...logs].reverse().find(l=>l.emp===currentEmp&&l.type==='in'&&l.date===date);if(li){const[ih,im]=li.time.split(':').map(Number);const[oh,om]=time.split(':').map(Number);workMins=Math.max(0,(oh*60+om)-(ih*60+im));}}
+  if(type==='out'){
+    // Find last clock-in for this employee regardless of date (supports cross-day)
+    const li=logs.find(l=>l.emp===currentEmp&&l.type==='in');
+    if(li&&li.ts)workMins=Math.max(0,Math.round((now.getTime()-li.ts)/60000));
+  }
   const newLog = {emp:currentEmp,name,type,time,date,detail,amount,km,workMins,ts:now.getTime()};
   logs.push(newLog);
   empStatus[currentEmp]=type==='in'?'in':'out';
@@ -2225,25 +2238,67 @@ async function loadOilPrice(){
   const el=document.getElementById('oilPriceContent');if(!el)return;
   el.innerHTML='<div style="font-size:12px;color:var(--g3);text-align:center;padding:40px 0">載入中...</div>';
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',max_tokens:1000,
-        tools:[{type:'web_search_20250305',name:'web_search'}],
-        messages:[{role:'user',content:'查詢台灣中油今日最新油價和上週油價（用於對比），只回傳JSON，格式：{"date":"今日日期","92":今日價,"95":今日價,"98":今日價,"diesel":今日價,"prev92":上週價,"prev95":上週價,"prev98":上週價,"prevDiesel":上週價}，所有價格為數字，不含單位'}]
-      })
+    // Use CPC Taiwan open data API via CORS proxy
+    const proxyUrl='https://corsproxy.io/?'+encodeURIComponent('https://www.cpc.com.tw/historyprice.aspx?n=2');
+    const r=await fetch(proxyUrl);
+    if(!r.ok)throw new Error('無法取得油價資料');
+    const html=await r.text();
+    // Parse price table from CPC website
+    const parser=new DOMParser();
+    const doc=parser.parseFromString(html,'text/html');
+    const rows=doc.querySelectorAll('table tr');
+    let prices={},prevPrices={},dates=[];
+    rows.forEach(tr=>{
+      const cells=[...tr.querySelectorAll('td,th')].map(c=>c.textContent.trim());
+      if(cells.length>=5&&/\d{4}\/\d{2}\/\d{2}/.test(cells[0])){
+        dates.push({date:cells[0],'92':cells[1],'95':cells[2],'98':cells[3],'diesel':cells[4]});
+      }
     });
-    if(!res.ok)throw new Error('API error '+res.status);
-    const data=await res.json();
-    const txt=data.content.filter(c=>c.type==='text').map(c=>c.text).join('');
-    let p=null;try{const m=txt.match(/\{[\s\S]*?\}/);if(m)p=JSON.parse(m[0]);}catch(e){}
-    if(!p)throw new Error('解析失敗');
+    if(dates.length>=1){prices=dates[0];prices.date=dates[0].date;}
+    if(dates.length>=2)prevPrices=dates[1];
+    if(!prices['92'])throw new Error('解析失敗');
+    const p={
+      date:prices.date,
+      '92':prices['92'],'95':prices['95'],'98':prices['98'],'diesel':prices['diesel'],
+      'prev92':prevPrices['92']||null,'prev95':prevPrices['95']||null,
+      'prev98':prevPrices['98']||null,'prevDiesel':prevPrices['diesel']||null
+    };
     _lastOilPrices=p;
     renderOilPrice(el,p);
   }catch(e){
-    el.innerHTML='<div style="font-size:13px;color:var(--g4);text-align:center;padding:20px 0">⚠️ '+e.message+'<br><span style="font-size:11px;color:var(--g3)">請稍後再試</span></div>';
+    // Fallback: hardcode last known prices with update prompt
+    const today=new Date().toLocaleDateString('zh-TW');
+    el.innerHTML=`<div style="background:var(--s2);border-radius:14px;padding:20px;box-shadow:var(--shadow);text-align:center">
+      <div style="font-size:13px;color:var(--g4);margin-bottom:8px">⚠️ 無法自動載入油價</div>
+      <div style="font-size:11px;color:var(--g3);font-family:var(--mono);line-height:1.8">
+        請至 <a href="https://www.cpc.com.tw" target="_blank" style="color:var(--blue)">台灣中油官網</a> 查詢<br>
+        或手動輸入今日油價：
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px">
+        ${['92','95','98','diesel'].map(k=>`<div>
+          <div style="font-size:10px;color:var(--g3);font-family:var(--mono);margin-bottom:4px">${k==='diesel'?'柴油':k+' 無鉛'}</div>
+          <input id="oilInput${k}" type="number" step="0.1" placeholder="0.0" style="width:100%;border:1.5px solid var(--g1);border-radius:8px;padding:8px;font-size:16px;font-weight:700;text-align:center;background:var(--s2);color:var(--w);font-family:var(--fi)">
+        </div>`).join('')}
+      </div>
+      <button onclick="applyManualOilPrice()" style="margin-top:14px;width:100%;background:var(--w);color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--fi)">套用</button>
+    </div>`;
   }
+}
+function applyManualOilPrice(){
+  const p={
+    date:new Date().toLocaleDateString('zh-TW'),
+    '92':document.getElementById('oilInput92')?.value,
+    '95':document.getElementById('oilInput95')?.value,
+    '98':document.getElementById('oilInput98')?.value,
+    'diesel':document.getElementById('oilInputdiesel')?.value,
+    'prev92':_lastOilPrices?.['92']||null,
+    'prev95':_lastOilPrices?.['95']||null,
+    'prev98':_lastOilPrices?.['98']||null,
+    'prevDiesel':_lastOilPrices?.['diesel']||null,
+  };
+  if(!p['92']&&!p['95'])return showToast('請輸入油價');
+  _lastOilPrices=p;
+  renderOilPrice(document.getElementById('oilPriceContent'),p);
 }
 function renderOilPrice(el,p){
   function getDiff(cur,prev){
@@ -2304,22 +2359,33 @@ function updateReport(){
   let yenMins=0;
   const yenByType={拍攝:0,剪輯:0,設計:0,其他:0};
   const yenByClient={};
-  yenLogs.forEach(l=>{
-    if(l.type==='out'&&l.workMins>0){
-      yenMins+=l.workMins;
-      const parts=(l.detail||'').split(' · ');
+  const yenInLogs=yenLogs.filter(l=>l.type==='in').sort((a,b)=>b.ts-a.ts);
+  yenLogs.filter(l=>l.type==='out').sort((a,b)=>b.ts-a.ts).forEach(l=>{
+    let mins=l.workMins||0;
+    if(!mins){
+      // Fallback: find nearest preceding clock-in by ts
+      const matchIn=yenInLogs.find(i=>i.ts<l.ts);
+      if(matchIn)mins=Math.max(0,Math.round((l.ts-matchIn.ts)/60000));
+    }
+    if(mins>0){
+      yenMins+=mins;
+      const parts=(l.detail||'').split(' · ').map(s=>s.trim()).filter(Boolean);
       const typ=parts[0]||'其他';
       const cli=parts[1]||'';
-      if(yenByType[typ]!==undefined)yenByType[typ]+=l.workMins;
-      else yenByType['其他']+=l.workMins;
-      if(cli)yenByClient[cli]=(yenByClient[cli]||0)+l.workMins;
+      if(yenByType[typ]!==undefined)yenByType[typ]+=mins;
+      else yenByType['其他']=(yenByType['其他']||0)+mins;
+      if(cli)yenByClient[cli]=(yenByClient[cli]||0)+mins;
     }
   });
   const yenH=Math.floor(yenMins/60),yenM=yenMins%60;
   const yenDays=new Set(yenLogs.filter(l=>l.type==='in').map(l=>l.date)).size;
-  const yenMaxLog=yenLogs.filter(l=>l.workMins>0).sort((a,b)=>b.workMins-a.workMins)[0];
-  const yenMaxH=yenMaxLog?Math.floor(yenMaxLog.workMins/60):0;
-  const yenMaxM=yenMaxLog?yenMaxLog.workMins%60:0;
+  const yenMaxLog=yenLogs.filter(l=>l.type==='out').map(l=>{
+    let m=l.workMins||0;
+    if(!m){const i=yenInLogs.find(x=>x.ts<l.ts);if(i)m=Math.max(0,Math.round((l.ts-i.ts)/60000));}
+    return {...l,_mins:m};
+  }).filter(l=>l._mins>0).sort((a,b)=>b._mins-a._mins)[0];
+  const yenMaxH=yenMaxLog?Math.floor(yenMaxLog._mins/60):0;
+  const yenMaxM=yenMaxLog?yenMaxLog._mins%60:0;
   const yenAvg=yenDays>0?Math.round(yenMins/yenDays/60*10)/10:0;
 
   // Hero
@@ -2381,14 +2447,16 @@ function updateReport(){
   // ── 4N ────────────────────────────────────────────────────────
   const fourNLogs=filtered.filter(l=>l.emp==='B');
   let fourNAmt=0,fourNTrips=0,fourNKm=0,totalWorkMins4N=0;
-  fourNLogs.forEach(l=>{
-    if(l.type==='out'){
-      fourNAmt+=l.amount||0;
-      const tripMatch=(l.detail||'').match(/([0-9]+)趟/);
-      if(tripMatch)fourNTrips+=parseInt(tripMatch[1]);
-      fourNKm+=l.km||0;
-      if((l.amount||0)>0&&(l.workMins||0)>0)totalWorkMins4N+=l.workMins;
-    }
+  const fourNInLogs=fourNLogs.filter(l=>l.type==='in').sort((a,b)=>b.ts-a.ts);
+  fourNLogs.filter(l=>l.type==='out').forEach(l=>{
+    fourNAmt+=l.amount||0;
+    const tripMatch=(l.detail||'').match(/([0-9]+)趟/);
+    if(tripMatch)fourNTrips+=parseInt(tripMatch[1]);
+    const rawKm=l.km||0;
+    if(rawKm>0&&rawKm<800)fourNKm+=rawKm;
+    let mins=l.workMins||0;
+    if(!mins){const i=fourNInLogs.find(x=>x.ts<l.ts);if(i)mins=Math.max(0,Math.round((l.ts-i.ts)/60000));}
+    if((l.amount||0)>0&&mins>0)totalWorkMins4N+=mins;
   });
   const fourNDays=new Set(fourNLogs.filter(l=>l.type==='in').map(l=>l.date)).size;
   const avgPerTrip=fourNTrips>0?Math.round(fourNAmt/fourNTrips):0;
