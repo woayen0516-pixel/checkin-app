@@ -1253,8 +1253,19 @@ function setupRealtime(){
     try{const r=await fetch(SB+'/rest/v1/logs?select=ts&order=ts.desc&limit=1',{headers:SBH});if(r.ok){const d=await r.json();const v=d[0]?.ts||0;if(v&&v!==lastLogTs){lastLogTs=v;loadLogs();}}}catch(e){}
     try{const r=await fetch(SB+'/rest/v1/events?select=id&order=id.desc&limit=1',{headers:SBH});if(r.ok){const d=await r.json();const v=d[0]?.id||0;if(v&&v!==lastEvId){lastEvId=v;loadEvents();}}}catch(e){}
     try{
-      const r=await fetch(SB+'/rest/v1/memos?select=id,updated_at&order=updated_at.desc',{headers:SBH});
-      if(r.ok){const d=await r.json();const sig=d.map(x=>x.id+'|'+(x.updated_at||'')).join(',');if(sig!==lastMemoSig){lastMemoSig=sig;loadMemos();}}
+      // Use id list as signature - detects add/delete; for edits we rely on manual save
+      const r=await fetch(SB+'/rest/v1/memos?select=id&order=id.desc',{headers:SBH});
+      if(r.ok){
+        const d=await r.json();
+        const sig=d.map(x=>x.id).join(',');
+        if(sig!==lastMemoSig){
+          // Only reload if count changed (new/deleted), not just any difference
+          const prevCount=lastMemoSig?lastMemoSig.split(',').length:0;
+          const newCount=d.length;
+          if(lastMemoSig===''||prevCount!==newCount){lastMemoSig=sig;loadMemos();}
+          else{lastMemoSig=sig;} // update sig but don't reload (prevents overwriting local edits)
+        }
+      }
     }catch(e){}
   },5000);
 }
@@ -1372,7 +1383,12 @@ function showPage(name){
   if(name==='calendar'){checkNotifPermission();renderCalendar();}
   if(name==='memo'){renderMemos(curMemoFilter);loadTodos();}
   if(name==='records')updateLogList(curFilter);
-  if(name==='oilprice')loadOilPrice();
+  if(name==='oilprice'){
+    const cached=loadCachedOilPrice();
+    const el=document.getElementById('oilPriceContent');
+    if(cached&&el)renderOilPrice(el,cached);
+    else loadOilPrice();
+  }
 }
 function drawerNav(name){showPage(name);closeDrawer();}
 function toggleDrawer(){
@@ -1627,7 +1643,12 @@ function updateLogList(filter){
   // Group by date
   const groups={};
   sorted.forEach(l=>{if(!groups[l.date])groups[l.date]=[];groups[l.date].push(l);});
-  const dates=Object.keys(groups).sort((a,b)=>new Date(b.replace(/\//g,'-'))>new Date(a.replace(/\//g,'-'))?1:-1);
+  // Sort date groups by the maximum ts in each group (newest first)
+  const dates=Object.keys(groups).sort((a,b)=>{
+    const maxA=Math.max(...groups[a].map(l=>l.ts));
+    const maxB=Math.max(...groups[b].map(l=>l.ts));
+    return maxB-maxA;
+  });
   const today=new Date().toLocaleDateString('zh-TW');
   const yesterday=new Date(Date.now()-86400000).toLocaleDateString('zh-TW');
   let html='';
@@ -2151,7 +2172,7 @@ function saveEditMemo(){
   if(!text){showToast('請輸入內容');return;}
   memos[idx].text=text;memos[idx].who=document.getElementById('editMemoWho').value;memos[idx].color=_editMemoColor||'white';
   const m=memos[idx];
-  const payload={text:m.text,who:m.who,color:m.color,updated_at:new Date().toISOString()};
+  const payload={text:m.text,who:m.who,color:m.color};
   if(m._id)sbUpdate('memos','id',m._id,payload);
   else sbUpdate('memos','memo_id',m.id,payload);
   closeEditMemo();renderMemos(curMemoFilter);showToast('備忘已更新！');
@@ -2236,51 +2257,46 @@ async function deleteTodo(id){askDelete('確定刪除這個待辦？',async()=>{
 let _lastOilPrices=null;
 async function loadOilPrice(){
   const el=document.getElementById('oilPriceContent');if(!el)return;
+  // Show cached price immediately if available
+  const cached=loadCachedOilPrice();
+  if(cached){renderOilPrice(el,cached);return;}
   el.innerHTML='<div style="font-size:12px;color:var(--g3);text-align:center;padding:40px 0">載入中...</div>';
   try{
-    // Use CPC Taiwan open data API via CORS proxy
     const proxyUrl='https://corsproxy.io/?'+encodeURIComponent('https://www.cpc.com.tw/historyprice.aspx?n=2');
     const r=await fetch(proxyUrl);
     if(!r.ok)throw new Error('無法取得油價資料');
     const html=await r.text();
-    // Parse price table from CPC website
     const parser=new DOMParser();
     const doc=parser.parseFromString(html,'text/html');
     const rows=doc.querySelectorAll('table tr');
-    let prices={},prevPrices={},dates=[];
+    let dates=[];
     rows.forEach(tr=>{
       const cells=[...tr.querySelectorAll('td,th')].map(c=>c.textContent.trim());
       if(cells.length>=5&&/\d{4}\/\d{2}\/\d{2}/.test(cells[0])){
         dates.push({date:cells[0],'92':cells[1],'95':cells[2],'98':cells[3],'diesel':cells[4]});
       }
     });
-    if(dates.length>=1){prices=dates[0];prices.date=dates[0].date;}
-    if(dates.length>=2)prevPrices=dates[1];
-    if(!prices['92'])throw new Error('解析失敗');
+    if(!dates.length||!dates[0]['92'])throw new Error('解析失敗');
     const p={
-      date:prices.date,
-      '92':prices['92'],'95':prices['95'],'98':prices['98'],'diesel':prices['diesel'],
-      'prev92':prevPrices['92']||null,'prev95':prevPrices['95']||null,
-      'prev98':prevPrices['98']||null,'prevDiesel':prevPrices['diesel']||null
+      date:dates[0].date,
+      '92':dates[0]['92'],'95':dates[0]['95'],'98':dates[0]['98'],'diesel':dates[0]['diesel'],
+      'prev92':dates[1]?.['92']||null,'prev95':dates[1]?.['95']||null,
+      'prev98':dates[1]?.['98']||null,'prevDiesel':dates[1]?.['diesel']||null
     };
     _lastOilPrices=p;
+    try{localStorage.setItem('oilPrices',JSON.stringify(p));}catch(e){}
     renderOilPrice(el,p);
   }catch(e){
-    // Fallback: hardcode last known prices with update prompt
-    const today=new Date().toLocaleDateString('zh-TW');
     el.innerHTML=`<div style="background:var(--s2);border-radius:14px;padding:20px;box-shadow:var(--shadow);text-align:center">
       <div style="font-size:13px;color:var(--g4);margin-bottom:8px">⚠️ 無法自動載入油價</div>
-      <div style="font-size:11px;color:var(--g3);font-family:var(--mono);line-height:1.8">
-        請至 <a href="https://www.cpc.com.tw" target="_blank" style="color:var(--blue)">台灣中油官網</a> 查詢<br>
-        或手動輸入今日油價：
-      </div>
+      <div style="font-size:11px;color:var(--g3);font-family:var(--mono);line-height:1.8">手動輸入今日油價：</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px">
         ${['92','95','98','diesel'].map(k=>`<div>
           <div style="font-size:10px;color:var(--g3);font-family:var(--mono);margin-bottom:4px">${k==='diesel'?'柴油':k+' 無鉛'}</div>
-          <input id="oilInput${k}" type="number" step="0.1" placeholder="0.0" style="width:100%;border:1.5px solid var(--g1);border-radius:8px;padding:8px;font-size:16px;font-weight:700;text-align:center;background:var(--s2);color:var(--w);font-family:var(--fi)">
+          <input id="oilInput${k}" type="number" step="0.1" placeholder="0.0" value="${_lastOilPrices?.[k]||''}" style="width:100%;border:1.5px solid var(--g1);border-radius:8px;padding:8px;font-size:16px;font-weight:700;text-align:center;background:var(--s2);color:var(--w);font-family:var(--fi)">
         </div>`).join('')}
       </div>
-      <button onclick="applyManualOilPrice()" style="margin-top:14px;width:100%;background:var(--w);color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--fi)">套用</button>
+      <button onclick="applyManualOilPrice()" style="margin-top:14px;width:100%;background:var(--w);color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--fi)">套用並儲存</button>
     </div>`;
   }
 }
@@ -2298,7 +2314,16 @@ function applyManualOilPrice(){
   };
   if(!p['92']&&!p['95'])return showToast('請輸入油價');
   _lastOilPrices=p;
+  try{localStorage.setItem('oilPrices',JSON.stringify(p));}catch(e){}
   renderOilPrice(document.getElementById('oilPriceContent'),p);
+  showToast('油價已儲存');
+}
+function loadCachedOilPrice(){
+  try{
+    const s=localStorage.getItem('oilPrices');
+    if(s){const p=JSON.parse(s);_lastOilPrices=p;return p;}
+  }catch(e){}
+  return null;
 }
 function renderOilPrice(el,p){
   function getDiff(cur,prev){
@@ -2452,7 +2477,12 @@ function updateReport(){
     fourNAmt+=l.amount||0;
     const tripMatch=(l.detail||'').match(/([0-9]+)趟/);
     if(tripMatch)fourNTrips+=parseInt(tripMatch[1]);
-    const rawKm=l.km||0;
+    // km: prefer stored km field if reasonable, else parse from detail
+    let rawKm=l.km||0;
+    if(rawKm<=0){
+      const kmMatch=(l.detail||'').match(/([0-9]+)km/i);
+      if(kmMatch)rawKm=parseInt(kmMatch[1]);
+    }
     if(rawKm>0&&rawKm<800)fourNKm+=rawKm;
     let mins=l.workMins||0;
     if(!mins){const i=fourNInLogs.find(x=>x.ts<l.ts);if(i)mins=Math.max(0,Math.round((l.ts-i.ts)/60000));}
@@ -2574,7 +2604,7 @@ async function saveBackfill(){
   const [hh,mm]=(timeVal||'00:00').split(':');
   const ts=new Date(parseInt(y),parseInt(m)-1,parseInt(d),parseInt(hh),parseInt(mm)).getTime();
   const newLog={emp,name,type,time:timeVal,date:dateZh,detail,amount,km,workMins:0,ts};
-  logs.push(newLog);logs.sort((a,b)=>a.ts-b.ts);
+  logs.unshift(newLog);logs.sort((a,b)=>b.ts-a.ts);
   await sbInsert('logs',{emp:newLog.emp,name:newLog.name,type:newLog.type,time:newLog.time,date:newLog.date,detail:newLog.detail,amount:newLog.amount,km:newLog.km,work_mins:0,ts:newLog.ts});
   updateLogList(curFilter);closeBackfill();
   showToast('補登成功！'+dateZh+' '+timeVal);
