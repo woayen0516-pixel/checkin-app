@@ -1222,9 +1222,19 @@ async function sbInsert(table,row){
   try{
     const r=await fetch(SB+'/rest/v1/'+table,{method:'POST',headers:{...SBH,'Prefer':'return=representation'},body:JSON.stringify(row)});
     const t=await r.text();
-    if(!r.ok){console.error('sbInsert error',table,t);return false;}
+    if(!r.ok){
+      let msg=r.status+'';
+      try{const j=JSON.parse(t);msg=j.message||j.hint||msg;}catch(e){}
+      console.error('sbInsert error',table,msg);
+      showToast('⚠️ 儲存失敗：'+msg);
+      return false;
+    }
     try{return JSON.parse(t);}catch(e){return true;}
-  }catch(e){console.error('sbInsert error',table,e);return false;}
+  }catch(e){
+    console.error('sbInsert error',table,e);
+    showToast('⚠️ 網路錯誤：'+e.message);
+    return false;
+  }
 }
 async function sbDelete(table, col, val) {
   try {
@@ -1236,9 +1246,15 @@ async function sbDelete(table, col, val) {
 async function sbUpdate(table, col, val, row) {
   try {
     const r=await fetch(SB+'/rest/v1/'+table+'?'+col+'=eq.'+encodeURIComponent(val),{method:'PATCH',headers:{...SBH,'Prefer':'return=minimal'},body:JSON.stringify(row)});
-    if(!r.ok){const t=await r.text();console.error('sbUpdate',table,r.status,t);return false;}
+    if(!r.ok){
+      const t=await r.text();
+      let msg=r.status+'';
+      try{const j=JSON.parse(t);msg=j.message||j.hint||msg;}catch(e){}
+      console.error('sbUpdate error',table,msg);
+      return false;
+    }
     return true;
-  } catch(e){console.error('sbUpdate',e);return false;}
+  } catch(e){console.error('sbUpdate exception',e);return false;}
 }
 async function testConnection(){
   try{
@@ -2102,22 +2118,32 @@ function selectMemoColor(c,el){_memoColor=c;document.querySelectorAll('#memoColo
 function selectEditMemoColor(c,el){_editMemoColor=c;document.querySelectorAll('#editMemoColorPicker .color-dot').forEach(d=>d.classList.remove('sel'));el.classList.add('sel');}
 function selectMemoSize(s,el){_memoSize=s;document.querySelectorAll('.size-opt').forEach(d=>d.classList.remove('sel'));el.classList.add('sel');}
 async function addMemo(){
-  const text=document.getElementById('memoText').value.trim();if(!text){showToast('請輸入備忘內容');return;}
+  const text=document.getElementById('memoText').value.trim();
+  if(!text){showToast('請輸入備忘內容');return;}
   const now=new Date();
-  const m={who:document.getElementById('memoWho').value,text,date:now.toLocaleDateString('zh-TW'),time:now.toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'}),id:now.getTime(),color:_memoColor||'white',size:_memoSize||'full'};
+  const m={
+    who:document.getElementById('memoWho').value,
+    text,
+    date:now.toLocaleDateString('zh-TW'),
+    time:now.toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'}),
+    id:now.getTime(),
+    color:_memoColor||'white',
+    size:_memoSize||'full',
+    _id:null
+  };
   memos.unshift(m);
-  closeAddMemo();renderMemos(curMemoFilter);
-  const res=await sbInsert('memos',{who:m.who,text:m.text,date:m.date,time:m.time,memo_id:m.id,color:m.color,size:m.size});
+  closeAddMemo();
+  renderMemos(curMemoFilter);
+  const res=await sbInsert('memos',{
+    who:m.who,text:m.text,date:m.date,time:m.time,
+    memo_id:m.id,color:m.color,size:m.size
+  });
   if(res&&res[0]){
-    // Update _id with actual DB id
     const idx=memos.findIndex(x=>x.id===m.id);
     if(idx>=0)memos[idx]._id=res[0].id;
     showToast('備忘已儲存！');
-  } else {
-    // Insert failed - reload from DB to get true state
-    showToast('儲存中...');
-    await loadMemos();
   }
+  // sbInsert already shows error toast on failure
 }
 function renderMemos(filter){
   curMemoFilter=filter;
@@ -2189,18 +2215,26 @@ function editMemoById(id){
   document.getElementById('editMemoModal').classList.add('show');
 }
 function closeEditMemo(){document.getElementById('editMemoModal').classList.remove('show');}
-function saveEditMemo(){
+async function saveEditMemo(){
   const idStr=document.getElementById('editMemoId').value;
   const idx=memos.findIndex(x=>String(x.id)===idStr);
   if(idx<0){showToast('找不到備忘');return;}
   const text=document.getElementById('editMemoText').value.trim();
   if(!text){showToast('請輸入內容');return;}
-  memos[idx].text=text;memos[idx].who=document.getElementById('editMemoWho').value;memos[idx].color=_editMemoColor||'white';
+  memos[idx].text=text;
+  memos[idx].who=document.getElementById('editMemoWho').value;
+  memos[idx].color=_editMemoColor||'white';
   const m=memos[idx];
+  closeEditMemo();
+  renderMemos(curMemoFilter);
   const payload={text:m.text,who:m.who,color:m.color};
-  if(m._id)sbUpdate('memos','id',m._id,payload);
-  else sbUpdate('memos','memo_id',m.id,payload);
-  closeEditMemo();renderMemos(curMemoFilter);showToast('備忘已更新！');
+  let ok=false;
+  if(m._id){
+    ok=await sbUpdate('memos','id',m._id,payload);
+  } else if(m.id){
+    ok=await sbUpdate('memos','memo_id',m.id,payload);
+  }
+  showToast(ok?'備忘已更新！':'⚠️ 更新失敗，將在下次同步時重試');
 }
 function deleteMemoById(id){deleteMemo(id);}
 function moveMemo(id,dir){
@@ -2824,15 +2858,6 @@ initData().then(()=>{
 
 
 function closeEditModal(){document.getElementById('editModal').classList.remove('show');}
-function saveEditLog(){
-  const ts=parseInt(document.getElementById('editLogTs').value);
-  const idx=logs.findIndex(l=>l.ts===ts);if(idx<0)return;
-  logs[idx].date=document.getElementById('editDate').value;
-  logs[idx].time=document.getElementById('editTime').value;
-  logs[idx].detail=document.getElementById('editDetail').value;
-  sbUpdate('logs','ts',ts,{date:logs[idx].date,time:logs[idx].time,detail:logs[idx].detail});
-  updateLogList(curFilter);closeEditModal();showToast('紀錄已更新！');
-}
 
 </script>
 </body>
